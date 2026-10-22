@@ -29,6 +29,12 @@ const SRC={
  cl_dxb:{t:"cestujlevne.com: Praha–Dubaj se Smartwings (akce 1/2026)",u:"https://www.cestujlevne.com/akcni-letenky/prime-lety-z-prahy-do-dubaje-behem-ledna-se-smartwings"},
  sk_fue:{t:"Skyscanner: Praha–Fuerteventura (Smartwings ~9 letů týdně, jaro 2026)",u:"https://www.skyscanner.co.za/routes/prg/fue/prague-to-fuerteventura.html"},
  sk_vfue:{t:"Skyscanner: Vídeň–Fuerteventura (Ryanair, Austrian)",u:"https://www.skyscanner.co.za/routes/vie/fue/vienna-to-fuerteventura.html"},
+ wko26:{t:"WKO: přehled prázdnin v Rakousku 2026/27 (PDF)",u:"https://www.wko.at/oe/transport-verkehr/autobus/ferien-uebersicht-26-27.pdf"},
+ cebia27:{t:"Cebia: jarní prázdniny 2027 po okresech",u:"https://www.cebia.cz/pruvodce/jarni-prazdniny-2027"},
+ topcz27:{t:"Top.cz: jarní prázdniny, přehled podle okresů",u:"https://www.top.cz/jarni-prazdniny-prehled-terminu-podle-okresu"},
+ fin27:{t:"Finance.cz: prázdniny a svátky ve školním roce 2026/2027",u:"https://www.finance.cz/clanky/skolni-rok-2026-2027-je-za-rohem-ceka-nas-mene-volna-jak-vychazeji-prazdniny-a-svatky/"},
+ msmt27:{t:"MŠMT: Organizace školního roku 2026/2027 (PDF)",u:"https://mSmT.Cz/uploads/O201/Organizace_skolniho_roku_2026_2027.pdf"},
+ momo_rak_d:{t:"momondo.cz: Praha–Marrákeš, přímé lety po, čt, pá, ne",u:"https://www.momondo.cz/lety/praha/marrakes"},
  /* klima */
  aemet_tfs:{t:"AEMET: normály Tenerife Sur (C429I)",u:"https://www.aemet.es/en/serviciosclimaticos/datosclimatologicos/valoresclimatologicos?l=C429I&k=coo"},
  aemet_pmi:{t:"AEMET: normály Palma letiště (B278)",u:"https://www.aemet.es/en/serviciosclimaticos/datosclimatologicos/valoresclimatologicos?l=B278"},
@@ -170,6 +176,22 @@ const SRC={
  g_rak:{t:"World Travel Guide: restaurace Marrákeš",u:"https://worldtravelguide.net/guides/africa/morocco/marrakech/restaurants"},
  g_tus:{t:"Gambero Rosso: Val d'Orcia",u:"https://www.gamberorossointernational.com/?p=507221"}
 };
+
+/* Prázdniny a svátky, které zdražují letenky nebo mění letový řád (od, do včetně) */
+const HOL=[
+ {od:"2027-02-01",do:"2027-02-07",t:"Semestrální prázdniny Vídeň a Dolní Rakousy",src:["wko26"]},
+ {od:"2027-02-01",do:"2027-03-14",t:"Jarní prázdniny v ČR (každý okres jiný týden)",src:["fin27","msmt27"],wide:1},
+ {od:"2027-02-22",do:"2027-02-28",t:"Jarní prázdniny Praha 1–5 a Brno-město",src:["cebia27","topcz27"]},
+ {od:"2027-03-01",do:"2027-03-07",t:"Jarní prázdniny Praha 6–10",src:["topcz27"]},
+ {od:"2027-03-26",do:"2027-03-29",t:"Velikonoce (Velký pátek až Velikonoční pondělí)"},
+ {od:"2027-03-28",do:"2027-03-28",t:"Začíná letní letový řád (sezónní linky)"},
+ {od:"2027-05-01",do:"2027-05-01",t:"Svátek práce"},
+ {od:"2027-05-08",do:"2027-05-08",t:"Den vítězství"}];
+
+/* Cílová letiště pro vyhledávání letenek (IATA); f.<odlet>.to přepíše cíl pro konkrétní odlet */
+const APT={mallorca:"PMI",tenerife:"TFS",grancanaria:"LPA",lanzarote:"ACE",fuerteventura:"FUE",lapalma:"SPC",costablanca:"ALC",
+ girona:"BCN",andalusie:"AGP",kypr:"PFO",madeira:"FNC",algarve:"FAO",sicilie:"CTA",kreta:"CHQ",antalya:"AYT",marrakes:"RAK",
+ toskansko:"FLR",gruzie:"KUT",jordansko:"AMM",sae:"DXB",oman:"MCT"};
 
 const S_EST="odhad (bez ověřeného zdroje)";
 
@@ -356,7 +378,7 @@ const LOC=[
  wiki:["Monchique","Algarve","Lagos, Portugal"],terrain:["zvlněné","pobřeží","kopce"],type:["silnice","gravel"],
  hi:[16,17,19,21,24],lo:[8,9,11,12,15],rain:[6,5,5,5,3],sun:[6,6.5,7.5,8.5,10],sea:[16,15.5,15.5,16.5,17.5],
  cl:{st:"Faro letiště (IPMA, 1991–2020)",src:[],est:1},
- f:{PRG:{d:false,t:3.8,tr:2.75,a:"Smartwings do Lisabonu 3× týdně (po, st, pá) od 23. 10. 2026, pak 2,5–3 h autem",p:[5500,10000],od:"Lisabon od 116 € jednosměrně vč. kabinového zavazadla",src:["a24_lis"]},
+ f:{PRG:{d:false,t:3.8,tr:2.75,to:"LIS",days:[1,3,5],a:"Smartwings do Lisabonu 3× týdně (po, st, pá) od 23. 10. 2026, pak 2,5–3 h autem",p:[5500,10000],od:"Lisabon od 116 € jednosměrně vč. kabinového zavazadla",src:["a24_lis"]},
     VIE:{d:"s",t:3.8,a:"Ryanair Vídeň–Faro: zima 2026/27 neověřena",p:[3500,8000],src:[]},
     BTS:{d:false,t:7,a:"s přestupem",p:[5000,10000],src:[]}},
  transfer:"FAO → Lagos / Portimão 1 h",hotel:[30,45],bike:[25,55],car:[40,90],food:[35,50],
@@ -374,7 +396,7 @@ const LOC=[
  cl:{st:"Catania-Sigonella (1991–2020); teploty ověřeny, na pobřeží jsou noci teplejší",src:["cta_cl"]},
  f:{PRG:{d:"s",t:2.3,a:"Praha–Catania v zimě 2026/27 neověřeno, spíš od jara",p:[3500,8000],src:[]},
     VIE:{d:"s",t:1.9,a:"Ryanair Catania (zima 2025/26); 2026/27 ověřit",p:[2500,6500],src:["vie2526"]},
-    BTS:{d:true,t:2,tr:2.75,a:"Ryanair do Palerma a Trapani (zima 2026/27), pak 2,5–3 h autem na Etnu",p:[2500,6500],src:["bts"]}},
+    BTS:{d:true,t:2,tr:2.75,to:"PMO",a:"Ryanair do Palerma a Trapani (zima 2026/27), pak 2,5–3 h autem na Etnu",p:[2500,6500],src:["bts"]}},
  transfer:"CTA → Giardini Naxos 50 min",hotel:[35,60],bike:[40,45],car:[30,70],food:[50,65],
  cs:{hotel:"ubytování: odhad; kola Ciclabili Siciliane 43 €/den, dovoz do Taorminy; večeře pro 2 v Itálii ~70 €",src:["cicl_sic","scc","numbeo_rank"]},
  sc:[3,3,4,3,4],elev:"1 500–2 500 m/den",
@@ -420,7 +442,7 @@ const LOC=[
  wiki:["High Atlas","Marrakesh","Ourika Valley"],terrain:["velehory","pouštní pláně"],type:["silnice","gravel","MTB"],
  hi:[19,21,24,26,30],lo:[6,8,10,12.5,15.5],rain:[4,4,4,4,2],sun:[7.5,8,8.5,9.5,10],sea:[null,null,null,null,null],
  cl:{st:"Marrákeš-Menara (1991–2020); leden–březen ověřen",src:["rak_cl"]},
- f:{PRG:{d:true,t:4,a:"easyJet (st, ne) a další; momondo ukazuje přímé lety v zimě 2026/27",p:[4000,9000],od:"od 1 045 Kč jednosměrně (momondo)",src:["momo_rak"]},
+ f:{PRG:{d:true,t:4,days:[0,1,4,5],a:"přímé lety po, čt, pá a ne (easyJet a další, momondo)",p:[4000,9000],od:"od 1 045 Kč jednosměrně (momondo)",src:["momo_rak_d"]},
     VIE:{d:"s",t:4,a:"Ryanair/Austrian: 2026/27 neověřeno",p:[4000,9000],src:[]},
     BTS:{d:false,t:7,a:"s přestupem",p:[5000,10000],src:[]}},
  transfer:"RAK → Marrákeš 15 min, → Ourika 1 h",hotel:[30,60],bike:[40,125],car:[30,80],food:[25,40],
@@ -453,8 +475,8 @@ const LOC=[
  hi:[7,8,12,18,23],lo:[-2,-1,2,7,12],rain:[2.5,3,4,6.5,8.5],sun:[3,3.5,4.5,5.5,7],sea:[null,null,null,null,null],
  cl:{st:"Tbilisi (WeatherSpark, weather2travel); slunce je odhad",src:["tbs_cl"]},
  f:{PRG:{d:true,t:3.6,tr:4.5,a:"Wizz Air Praha–Kutaisi (asi 3 h 35), z Kutaisi do Kachetie 4–5 h autem",p:[3500,8000],od:"zpáteční 139 € (pozorovaná cena, říjen 2026)",src:["kut","kut2"]},
-    VIE:{d:false,t:7,a:"Austrian Vídeň–Tbilisi je v zimě 2026/27 pozastaveno; přes Istanbul",p:[6000,12000],src:["os_tbs"]},
-    BTS:{d:true,t:3.5,tr:4.5,a:"Wizz Air Bratislava–Kutaisi (po, st, pá), pak 4–5 h autem",p:[3500,8000],src:["bts_kut"]}},
+    VIE:{d:false,t:7,to:"TBS",a:"Austrian Vídeň–Tbilisi je v zimě 2026/27 pozastaveno; přes Istanbul",p:[6000,12000],src:["os_tbs"]},
+    BTS:{d:true,t:3.5,tr:4.5,days:[1,3,5],a:"Wizz Air Bratislava–Kutaisi (po, st, pá), pak 4–5 h autem",p:[3500,8000],src:["bts_kut"]}},
  transfer:"Kutaisi → Telavi 4–5 h; TBS → Telavi 1 h 30",hotel:[20,45],bike:[30,50],car:[50,110],food:[20,35],
  cs:{hotel:"ubytování, kola a jídlo: odhad; půjčovny silničních kol v Tbilisi jsme nedohledali",src:[]},
  sc:[3,3,5,2,5],elev:"1 000–2 000 m/den",

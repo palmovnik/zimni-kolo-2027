@@ -151,6 +151,18 @@ sup.cit a:hover,sup.cit a:focus-visible{background:var(--chip);text-decoration:u
 .rclimbs li span:first-child::before{content:"▲";position:absolute;left:0;font-size:8px;top:5px;color:var(--accent)}
 .rclimbs .cn{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
+.planbar{padding-block:10px 0}
+.plan{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:14px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.plan .muted,.muted{color:var(--muted)}
+.hols{display:flex;flex-wrap:wrap;gap:6px}
+.hol{font-size:12.5px;font-weight:600;padding:3px 8px;border-radius:12px;background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink);text-decoration:none}
+.hol.wide{background:var(--chip);font-weight:500}
+a.hol:hover{text-decoration:underline}
+.okd{font-size:12.5px;color:var(--good);font-weight:600}
+.dayx{display:block;font-size:12.5px;color:var(--bad);font-weight:600}
+.flinks{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;margin-top:3px}
+input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 6px;font:inherit;color:var(--ink)}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -332,6 +344,7 @@ footer p{max-width:90ch}
 <div class="controls">
   <div class="wrap">
     <div class="ctl"><label class="lbl">Měsíc</label><div class="seg" id="monthSeg" role="group" aria-label="Měsíc"></div></div>
+    <div class="ctl"><label class="lbl" for="dDate">Datum odletu</label><input type="date" id="dDate" min="2027-01-01" max="2027-05-31"><button class="btn sm" id="dClear" type="button" hidden aria-label="Zrušit datum">×</button></div>
     <div class="ctl"><label class="lbl">Odlet</label><div class="seg" id="apSeg" role="group" aria-label="Letiště">
       <button data-ap="ALL">Vše</button><button data-ap="PRG">Praha</button><button data-ap="VIE">Vídeň</button><button data-ap="BTS" title="Bratislava, asi 1 h od Vídně">Bratislava</button></div></div>
     <div class="ctl"><label class="lbl">Noci</label><div class="seg" id="nSeg" role="group" aria-label="Počet nocí"><button data-n="4">4</button><button data-n="5">5</button></div></div>
@@ -343,6 +356,7 @@ footer p{max-width:90ch}
   </div>
 </div>
 
+<div class="wrap planbar" id="planbar"></div>
 <section class="wrap mapsec" aria-label="Mapa lokalit">
   <div class="mapbox" id="mapbox">
     <div class="mapscroll" id="mapscroll"><svg id="map" viewBox="0 0 1000 494" role="img" aria-label="Mapa lokalit s barvou podle indexu počasí">
@@ -436,7 +450,7 @@ const fmtN=n=>n.toLocaleString("cs-CZ");
 /* ---------- state ---------- */
 const S={m:1,ap:"ALL",n:5,direct:false,hideKnown:false,sort:"tot",tab:"lokality",cmp:["costablanca","kypr","antalya"],metric:"tot",lcOff:{},tblSort:{k:"tot",dir:-1},w:null};
 try{const s=JSON.parse(localStorage.getItem("zk27")||"{}");Object.assign(S,s)}catch(e){}
-const save=()=>{try{localStorage.setItem("zk27",JSON.stringify({m:S.m,ap:S.ap,n:S.n,direct:S.direct,hideKnown:S.hideKnown,sort:S.sort,cmp:S.cmp,metric:S.metric,w:S.w,v2:S.v2,v3:S.v3,tblSort:S.tblSort}))}catch(e){}};
+const save=()=>{try{localStorage.setItem("zk27",JSON.stringify({m:S.m,ap:S.ap,n:S.n,direct:S.direct,hideKnown:S.hideKnown,sort:S.sort,cmp:S.cmp,metric:S.metric,date:S.date,w:S.w,v2:S.v2,v3:S.v3,tblSort:S.tblSort}))}catch(e){}};
 const $=s=>document.querySelector(s), byId=id=>LOC.find(l=>l.id===id);
 
 /* ---------- calculations ---------- */
@@ -592,7 +606,7 @@ function renderPick(){
   $("#pick").innerHTML=`<b>${MONTHS[S.m]}:</b> <span>podle tvého indexu vycházejí z nových lokalit nejlépe</span> ${top.map(l=>`<a data-open="${l.id}">${l.name}</a> <span style="color:var(--muted)">(${total(l,S.m)})</span>`).join(", ")} ${wBtn("nastavit váhy indexu")}`;
 }
 function idxBox(l){const v=total(l,S.m);return `<div class="idxwrap"><div class="idx" data-idx="${l.id}" tabindex="0" style="background:${METRICS.tot.col(v)}" aria-label="Celkový index ${v}, podrobnosti"><b>${v}</b><small>index</small></div>${wBtn()}</div>`;}
-function flightLines(l){return flights(l).map(([k,f])=>{const [t,c]=dirTxt(f.d);return `<div><b>${APN[k]}</b> ${fmtH(f.t)} · <span class="dir ${c}">${t}</span></div>`}).join("");}
+function flightLines(l){return flights(l).map(([k,f])=>{const [t,c]=dirTxt(f.d),di=dayIssue(f);return `<div><b>${APN[k]}</b> ${fmtH(f.t)} · <span class="dir ${c}">${t}</span>${di?`<div class="dayx">${di}</div>`:""}</div>`}).join("");}
 
 /* ---------- render: cards ---------- */
 function renderGrid(){
@@ -609,7 +623,7 @@ function renderGrid(){
       </div>
       <dl class="facts">
         <dt>Let</dt><dd>${flightLines(l)}</dd>
-        <dt>Cesta</dt><dd><b>${fmtH(travel(l))}</b> jedním směrem <span style="color:var(--muted)">(let + transfer ${fmtH(TR[l.id])})</span></dd>
+        <dt>Cesta</dt><dd><b>${fmtH(travel(l))}</b> jedním směrem <span style="color:var(--muted)">(let + transfer)</span>${(()=>{const bf=bestFlight(l)||flights(l)[0],u=flightUrls(l,bf[0]);return `<div><a class="cardweb" href="${u.g}" target="_blank" rel="noopener" title="Google Flights, 6 cestujících, ${fmtD(tripDates()[0])} – ${fmtD(tripDates()[1])}">Ceny letenek ${APZ[bf[0]]} ↗</a></div>`})()}</dd>
         <dt>Cena</dt><dd><b>${fmtK(c[0])}–${fmtK(c[1])} Kč</b> / os. za ${S.n} nocí</dd>
         <dt>Terén</dt><dd><div class="terrain">${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></dd>
         <dt>Trasy</dt><dd><div class="rlinks">${l.rt.r.map((r,i)=>`<button data-route="${l.id}:${i}" title="Mapa a GPX · ${r[1]} km · ${fmtN(r[2])} m">${r[0]}</button>`).join("")}</div></dd>
@@ -739,7 +753,7 @@ function openDetail(id){
         <p class="srcline">${l.cs.hotel}.${cite(l.cs.src)}</p></div>
     </div>
     <div><div class="eyebrow" style="margin-bottom:6px">Doprava</div>
-      <div class="airports">${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}${f.src.length?"":" · neověřeno"}.${cite(f.src)}</span></p>`}).join("")}</div>
+      <div class="airports">${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}${f.src.length?"":" · neověřeno"}.${cite(f.src)}</span>${dayIssue(f)?`<span class="dayx">${dayIssue(f)}</span>`:""}<span class="flinks">${(()=>{const u=flightUrls(l,k);return `<a href="${u.g}" target="_blank" rel="noopener">Google Flights ↗</a> <a href="${u.s}" target="_blank" rel="noopener">Skyscanner ↗</a> <span class="muted">${k}–${u.to}, ${fmtD(tripDates()[0])} – ${fmtD(tripDates()[1])}, 6 osob</span>`})()}</span></p>`}).join("")}</div>
       <p style="margin:0"><b>Transfer:</b> ${l.transfer}</p></div>
     <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div><div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
     ${routesHTML(l)}
@@ -752,9 +766,6 @@ function openDetail(id){
       <div class="webcards">${l.web.filter(k=>SRC[k]).map(k=>`<a class="webcard" href="${SRC[k].u}" target="_blank" rel="noopener"><b>${SRC[k].t.split(":")[0]}</b><span>${SRC[k].t.split(":").slice(1).join(":").trim()||"stránka trasy"}</span></a>`).join("")}</div></div>
     <div class="links">
       <button class="btn ${inC?"":"pri"}" data-cmp="${l.id}" aria-pressed="${inC}">${inC?"✓ V porovnání":"+ Porovnat"}</button>
-      <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Prague to "+l.name)}" target="_blank" rel="noopener">Lety z Prahy ↗</a>
-      <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Vienna to "+l.name)}" target="_blank" rel="noopener">Lety z Vídně ↗</a>
-      <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Bratislava to "+l.name)}" target="_blank" rel="noopener">Lety z Bratislavy ↗</a>
       <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(l.rt.ph[0][1]+" cycling climb")}" target="_blank" rel="noopener">Fotky z kola: ${l.rt.ph[0][1]} ↗</a>
       <a href="https://www.strava.com/search?q=${encodeURIComponent(l.name)}" target="_blank" rel="noopener">Strava ↗</a>
       <a href="https://www.komoot.com/discover/${encodeURIComponent(l.name)}/@${GEO[l.id][0]},${GEO[l.id][1]}/tours?sport=racebike" target="_blank" rel="noopener">Trasy na Komoot ↗</a>
@@ -945,12 +956,36 @@ $("#wDone").addEventListener("click",()=>$("#wdlg").close());$("#wdlgX").addEven
 $("#wdlg").addEventListener("click",e=>{if(e.target.id==="wdlg")e.target.close()});
 document.addEventListener("click",e=>{if(e.target.closest("[data-wopen]"))openWeights()});
 
+/* ---------- plánovač termínu a odkazy na letenky ---------- */
+const DOW=["ne","po","út","st","čt","pá","so"];
+const Dt=v=>new Date(v+"T12:00:00");
+const isoD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const fmtD=d=>`${DOW[d.getDay()]} ${d.getDate()}. ${d.getMonth()+1}.`;
+/* odlet: vybrané datum, jinak sobota v polovině zvoleného měsíce; návrat po S.n nocích */
+function tripDates(){let a;if(S.date)a=Dt(S.date);else{a=new Date(2027,S.m,12,12);while(a.getDay()!==6)a.setDate(a.getDate()+1);}
+  const b=new Date(a);b.setDate(b.getDate()+S.n);return [a,b];}
+const holidaysIn=(a,b)=>HOL.filter(h=>Dt(h.od)<=b&&Dt(h.do)>=a);
+function dayIssue(f){if(!S.date||!f.days)return "";const [a,b]=tripDates(),bad=[];
+  if(!f.days.includes(a.getDay()))bad.push("odlet v "+DOW[a.getDay()]);if(!f.days.includes(b.getDay()))bad.push("návrat v "+DOW[b.getDay()]);
+  return bad.length?`Nesedí ${bad.join(" a ")}: létá jen ${f.days.map(d=>DOW[d]).join(", ")}`:"";}
+function flightUrls(l,k){const f=l.f[k],to=f.to||APT[l.id],[a,b]=tripDates(),y=d=>isoD(d).slice(2).replace(/-/g,"");
+  return {g:"https://www.google.com/travel/flights?q="+encodeURIComponent(`Flights from ${k} to ${to} on ${isoD(a)} through ${isoD(b)} for 6 adults`),
+    s:`https://www.skyscanner.net/transport/flights/${k.toLowerCase()}/${to.toLowerCase()}/${y(a)}/${y(b)}/?adultsv2=6&cabinclass=economy&rtn=1`,to};}
+function renderPlan(){const [a,b]=tripDates(),hs=holidaysIn(a,b);
+  const hol=h=>{const u=h.src&&SRC[h.src[0]];const txt=`${h.t} (${Dt(h.od).getDate()}. ${Dt(h.od).getMonth()+1}.${h.od!==h.do?` – ${Dt(h.do).getDate()}. ${Dt(h.do).getMonth()+1}.`:""})`;
+    return u?`<a class="hol${h.wide?" wide":""}" href="${u.u}" target="_blank" rel="noopener" title="${u.t}">${txt}</a>`:`<span class="hol${h.wide?" wide":""}">${txt}</span>`;};
+  $("#planbar").innerHTML=`<div class="plan"><div><b>${S.date?"Termín":"Ukázkový termín"}:</b> ${fmtD(a)} – ${fmtD(b)} 2027 · ${S.n} nocí${S.date?"":` <span class="muted">· vyber datum odletu, jinak počítám se sobotou v polovině měsíce</span>`}</div>
+    <div class="hols">${hs.length?hs.map(hol).join(""):`<span class="okd">Nekoliduje s prázdninami ani svátky.</span>`}</div></div>`;
+  $("#dDate").value=S.date||"";$("#dClear").hidden=!S.date;}
+$("#dDate").addEventListener("change",e=>{const v=e.target.value;if(v&&v>="2027-01-01"&&v<="2027-05-31"){S.date=v;S.m=Dt(v).getMonth()}else S.date=null;render();});
+$("#dClear").addEventListener("click",()=>{S.date=null;render();});
+
 /* ---------- wiring ---------- */
-function render(){renderControls();renderPick();renderMap();
+function render(){renderControls();renderPlan();renderPick();renderMap();
   if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else renderTable();save();}
 function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
 document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");if(!t)return;
-  if(t.dataset.m!==undefined){S.m=+t.dataset.m;render()}
+  if(t.dataset.m!==undefined){S.m=+t.dataset.m;if(S.date&&Dt(S.date).getMonth()!==S.m)S.date=null;render()}
   else if(t.dataset.ap){S.ap=t.dataset.ap;render()}
   else if(t.dataset.n){S.n=+t.dataset.n;render()}
   else if(t.dataset.metric){S.metric=t.dataset.metric;render()}
