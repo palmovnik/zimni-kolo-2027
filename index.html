@@ -61,7 +61,7 @@ header.top{padding-block:28px 18px}
 .mapbox .mk:focus{outline:none}
 .mapbox .org circle{fill:var(--accent);stroke:var(--surface);stroke-width:2}
 .mapbox .org text{font:700 13px var(--f-body);fill:var(--accent);paint-order:stroke;stroke:var(--sea);stroke-width:4px}
-.maplegend{position:absolute;left:12px;top:10px;background:color-mix(in srgb,var(--surface) 88%,transparent);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px;max-width:calc(100% - 24px)}
+.maplegend{position:absolute;left:12px;top:10px;background:color-mix(in srgb,var(--surface) 88%,transparent);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px;max-width:min(330px,calc(100% - 24px))}
 .maplegend b{color:var(--ink);font:600 13px var(--f-body)}
 .maplegend .bar{height:8px;width:150px;max-width:100%;border-radius:4px}
 .maptip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border-radius:8px;box-shadow:var(--shadow);padding:8px 10px;font-size:13px;min-width:170px;transform:translate(-50%,calc(-100% - 14px))}
@@ -278,7 +278,7 @@ footer p{max-width:90ch}
 <header class="top wrap">
   <div class="eyebrow">Silniční kola · gastro · leden – květen · 4–5 nocí · 5–6 lidí</div>
   <h1>Zimní <span>kolo</span> 2027</h1>
-  <p>Přehled lokalit, kam se dá z Prahy, Vídně nebo Bratislavy odletět za teplem a kopci. Vyber měsíc a letiště: karty, heatmapa i ceny se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko, nově i lokality na východ: Gruzie, Jordánsko, Emiráty a Omán.</p>
+  <p>Přehled lokalit, kam se dá z Prahy, Vídně nebo Bratislavy odletět za teplem a kopci. Vyber měsíc a letiště: karty, heatmapa i ceny se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko, nově i Fuerteventura a lokality na východ: Gruzie, Jordánsko, Emiráty a Omán.</p>
   <svg class="elev" viewBox="0 0 1000 38" preserveAspectRatio="none" aria-hidden="true"><path class="base" d="M0 37H1000"/><path d="M0 34 L60 33 L110 30 L150 22 L190 12 L215 6 L240 14 L290 28 L340 31 L380 26 L430 18 L470 24 L520 32 L570 30 L610 20 L650 9 L680 3 L705 9 L750 25 L800 33 L850 30 L890 22 L930 27 L1000 34"/></svg>
 </header>
 
@@ -402,6 +402,8 @@ const SRC={
  ar_amm:{t:"AeroRoutes: Austrian Vídeň–Ammán (zima 2025/26)",u:"https://www.aeroroutes.com/eng/241030-osnw25"},
  ek_prg:{t:"Emirates: Dubaj–Praha denně",u:"https://www.emirates.com/cz/czech/destinations/dxb/prg/flights-from-dubai-to-prague/"},
  cl_dxb:{t:"cestujlevne.com: Praha–Dubaj se Smartwings (akce 1/2026)",u:"https://www.cestujlevne.com/akcni-letenky/prime-lety-z-prahy-do-dubaje-behem-ledna-se-smartwings"},
+ sk_fue:{t:"Skyscanner: Praha–Fuerteventura (Smartwings ~9 letů týdně, jaro 2026)",u:"https://www.skyscanner.co.za/routes/prg/fue/prague-to-fuerteventura.html"},
+ sk_vfue:{t:"Skyscanner: Vídeň–Fuerteventura (Ryanair, Austrian)",u:"https://www.skyscanner.co.za/routes/vie/fue/vienna-to-fuerteventura.html"},
  /* klima */
  aemet_tfs:{t:"AEMET: normály Tenerife Sur (C429I)",u:"https://www.aemet.es/en/serviciosclimaticos/datosclimatologicos/valoresclimatologicos?l=C429I&k=coo"},
  aemet_pmi:{t:"AEMET: normály Palma letiště (B278)",u:"https://www.aemet.es/en/serviciosclimaticos/datosclimatologicos/valoresclimatologicos?l=B278"},
@@ -519,6 +521,11 @@ const SRC={
  pj_hafeet:{t:"PJAMM: Jebel Hafeet",u:"https://pjammcycling.com/climb/1810.Jebel-Hafeet"},
  too_gm:{t:"Tour of Oman 2018: Green Mountain",u:"https://www.tour-of-oman.com/en/news/2018/2018-tour-of-oman-route-revealed"},
  pj_akhdar:{t:"PJAMM: Jabal al Akhdar",u:"https://pjammcycling.com/climb/1265.Jabal-al-Akhdhar"},
+ km_fv30:{t:"Komoot: stoupání FV-30 k Betancurii",u:"https://www.komoot.com/highlight/7097927"},
+ cf_pajara:{t:"Climbfinder: Pájara z Ajuy",u:"https://climbfinder.com/en/climbs/pajara-ajuy"},
+ pcu_fue:{t:"ProCyclingUK: proč jet na Fuerteventuru",u:"https://procyclinguk.com/cycling-in-fuerteventura-why-it-deserves-a-place-on-your-riding-list/"},
+ fg_fue:{t:"Fuerteventura Guide: cyklistika",u:"https://www.fuerteventuraguide.com/?p=409"},
+ fue_bike:{t:"The Abroad Guide: půjčovny kol Fuerteventura",u:"https://theabroadguide.com/ebike-rental-in-fuerteventura/"},
  /* gastro */
  g_pmi:{t:"Imperial Properties: Michelin Mallorca 2026",u:"https://www.imperial-properties.com/en/ImperialPropertiesBlog/restaurantes-estrella-michelin-en-mallorca-2026-la-guia-completa"},
  g_pmi_caf:{t:"Epic Road Rides: nejlepší cyklokavárny Mallorky",u:"https://epicroadrides.com/cycling-blog/mallorcas-best-cafes-coffee-stops/"},
@@ -607,6 +614,21 @@ const LOC=[
  pros:["Teplo a sucho jako na Kanárech, ale jiná, měsíční krajina","Vynikající asfalt, málo aut","Club La Santa: specializovaný sportovní resort"],
  cons:["Silný pasát, vítr je hlavní soupeř","Kopce krátké, nejvýš kolem 600 m n. m.","Z Vídně Ryanair linku zrušil; přímo z Bratislavy"],
  tip:"Dobrá volba, pokud chcete kanárské teplo bez nekonečných stoupání. Na vítr počítejte s jízdou v háku a kratšími okruhy."},
+{id:"fuerteventura",name:"Fuerteventura",region:"Kanárské ostrovy, Španělsko",known:false,best:[0,1,2,3],
+ wiki:["Fuerteventura","Betancuria","Corralejo Natural Park"],terrain:["zvlněné","poušť","vítr"],type:["silnice","gravel"],
+ hi:[21,21,23,23,24],lo:[14,14,15,15.5,17],rain:[2,2,1.5,1,0.2],sun:[6.5,7,7.5,8.5,9],sea:[19,18.5,18.5,19,19.5],
+ cl:{st:"Fuerteventura letiště (AEMET C249I, 1981–2010)",src:["aemet_win"],est:1},
+ f:{PRG:{d:true,t:5.2,a:"Smartwings (v zimě 2025/26 pravidelně, na jaře 2026 asi 9 letů týdně)",p:[5500,11000],src:["sw_can","sk_fue"]},
+    VIE:{d:"s",t:5.1,a:"Ryanair a Austrian létali v zimě 2025/26; pro zimu 2026/27 se zdroje rozcházejí",p:[5000,11000],src:["vie2526","sk_vfue"]},
+    BTS:{d:false,t:8,a:"Fuerteventura není v zimní síti Ryanair z Bratislavy",p:[6000,12000],src:["bts"]}},
+ transfer:"FUE → Caleta de Fuste 10 min; → Corralejo 40 min",hotel:[45,80],bike:[35,70],car:[20,50],food:[40,55],
+ cs:{hotel:"ubytování: odhad (zima je na Kanárech hlavní sezóna); ceny silničních kol se nepodařilo přesně dohledat, jedna půjčovna v Corralejo uvádí asi 71 USD na osobu a den",src:["fue_bike","food_eu"]},
+ sc:[4,4,2,2,3],elev:"800–1 500 m/den",
+ climbs:[["Stoupání FV-30 k Betancurii","5,9 km","210 m","3,5 %","km_fv30"],["Pájara z Ajuy","8,9 km","223 m","2,5 %","cf_pajara"],["Okruhy vnitrozemím přes Betancurii","75–96 km","~1 300 m","—","pcu_fue"]],
+ web:["pcu_fue","cf_pajara","km_fv30","fg_fue"],
+ pros:["Nejsušší z Kanár: poušť, duny a liduprázdné silnice","Vnitrozemí kolem Betancurie s výhledy, ideální na tempo a kilometry","Přímé lety z Prahy (Smartwings, často)"],
+ cons:["Největrnější z Kanár: pasát umí z 90 km udělat těžký den","Žádná dlouhá stoupání jako na Tenerife či Gran Canarii","Málo půjčoven silničních kol, ceny ověřte předem"],
+ tip:"Bydlet v Caleta de Fuste (10 min od letiště, uprostřed ostrova) nebo v Corralejo. Na vítr 28–30 mm pláště a ranní starty."},
 
 {id:"lapalma",name:"La Palma",region:"Kanárské ostrovy, Španělsko",known:false,best:[1,2,3,4],
  wiki:["Roque de los Muchachos","Caldera de Taburiente National Park","Santa Cruz de La Palma"],terrain:["extrémní stoupání","sopky","les"],type:["silnice"],
@@ -871,6 +893,7 @@ const GASTRO={
  tenerife:{s:4,p:"€–€€€",d:["Papas arrugadas s mojo","Grilovaná ryba","Kozí sýr","Kozí maso"],w:"vína z Tacoronte, barraquito",n:"Nové hvězdy: Haydée, Taste 1973, El Taller de Seve Díaz; M.B. v Abamě má dvě. Na severu guachinches, domácí vinárny u vinařství.",src:["g_tfs"]},
  grancanaria:{s:3.5,p:"€–€€",d:["Papas arrugadas","Ropa vieja","Queso de flor","Bienmesabe"],w:"rum Arehucas, víno z Monte Lentiscal",n:"V Las Palmas El Equilibrista 33 (Bib Gourmand 2024–25). Na jihu převážně turistická menu.",src:["g_lpa"]},
  lanzarote:{s:3.5,p:"€–€€",d:["Lapas (přílipky)","Sancocho","Kozí sýr","Batáty s mojo"],w:"vulkanická Malvasía z La Geria",n:"Kamezí má michelinskou hvězdu. Vinařská cesta La Geria: El Grifo, Rubicón, Stratvs, Los Bermejos, El Chupadero, všechno na jedné silnici.",src:["g_ace"]},
+ fuerteventura:{s:3.5,p:"€–€€",d:["Sýr majorero","Papas arrugadas s mojo","Kozí maso","Grilovaná ryba"],w:"vína z Lanzarote, barraquito",n:"Kozí sýr majorero má chráněné označení původu. Rybí restaurace v El Cotillo a Corralejo. Hodnocení je náš odhad.",src:[]},
  lapalma:{s:3,p:"€",d:["Mojo rojo a verde","Kozí sýr","Almendrados","Grilovaná ryba"],w:"Malvasía z Bodegas Teneguía",n:"Restaurace hlavně v údolí Aridane (Pizca Bistrot, Burg On). Poctivá kuchyně, malý výběr.",src:["g_spc"]},
  costablanca:{s:4.5,p:"€€–€€€",d:["Arroz a banda","Fideuà","Červené krevety z Dénie","Turrón"],w:"Moscatel z Marina Alta, Monastrell",n:"Quique Dacosta v Dénii (3 hvězdy, otevřeno sezónně), v Calpe Audrey's, Beat a Orobianco (1 hvězda), Peix & Brases v Dénii.",src:["g_alc"]},
  girona:{s:5,p:"€€–€€€",d:["Katalánské tapas","Pa amb tomàquet","Suquet de peix","Crema catalana"],w:"víno Empordà, cava",n:"La Fábrica (cyklokavárna bývalého profíka Christiana Meiera), Federal na brunch. El Celler de Can Roca patří ke světové špičce (aktuální hvězdy ověřte).",src:["g_gro"]},
@@ -908,6 +931,10 @@ const ROUTES={
   r:[["Sever: Haría a Mirador del Río",75,1200,["Costa Teguise, Lanzarote","Teguise, Lanzarote","Haría, Lanzarote","Mirador del Río, Lanzarote","Arrieta, Lanzarote","Costa Teguise, Lanzarote"]],
      ["La Geria a Timanfaya",70,800,["Puerto del Carmen, Lanzarote","La Geria, Lanzarote","Mancha Blanca, Lanzarote","Yaiza, Lanzarote","Puerto del Carmen, Lanzarote"]],
      ["Femés a Playa Blanca",60,700,["Puerto del Carmen, Lanzarote","Femés, Lanzarote","Playa Blanca, Lanzarote","Yaiza, Lanzarote","Puerto del Carmen, Lanzarote"]]]},
+ fuerteventura:{ph:[["Betancuria road","Betancuria"],["Fuerteventura road desert","Silnice přes poušť"],["Mirador de las Peñas Fuerteventura","Mirador de las Peñas"],["Ajuy Fuerteventura","Ajuy"],["Corralejo dunes road","Duny Corralejo"]],
+  r:[["Vnitrozemí: Antigua – Betancuria – Pájara",80,1200,["Caleta de Fuste","Antigua, Fuerteventura","Betancuria","Pájara","Tuineje","Caleta de Fuste"]],
+     ["Pájara a Ajuy",20,250,["Pájara","Ajuy","Pájara"]],
+     ["Sever: Corralejo – La Oliva – Lajares",50,450,["Corralejo","La Oliva","Lajares","Corralejo"]]]},
  lapalma:{ph:[["Roque de los Muchachos road","Roque de los Muchachos"],["La Palma road volcano","Silnice na La Palmě"],["Fuencaliente La Palma","Fuencaliente"],["Caldera de Taburiente","Caldera de Taburiente"],["La Palma road volcano","Silnice na La Palmě"]],
   r:[["Roque z východu",42,2400,["Santa Cruz de La Palma","Roque de los Muchachos"]],
      ["Roque ze západu (Puntagorda)",55,2200,["Los Llanos de Aridane","Puntagorda, La Palma","Roque de los Muchachos"]],
@@ -1010,7 +1037,7 @@ function parts(l,m){
    price:{v:Math.round(clamp((35000-mid)/23000*100,0,100)),x:`${fmtK(c[0])}–${fmtK(c[1])} Kč / os. za ${S.n} nocí`}};
 }
 /* transfer z letiště na základnu v hodinách */
-const TR={mallorca:.75,tenerife:.25,grancanaria:.5,lanzarote:.25,lapalma:.75,costablanca:1,girona:1.25,andalusie:.75,kypr:.5,madeira:.25,
+const TR={mallorca:.75,tenerife:.25,grancanaria:.5,lanzarote:.25,fuerteventura:.5,lapalma:.75,costablanca:1,girona:1.25,andalusie:.75,kypr:.5,madeira:.25,
   algarve:1,sicilie:.75,kreta:.5,antalya:.75,marrakes:.5,toskansko:1.5,gruzie:1.5,jordansko:1,sae:1.25,oman:1.75};
 const trOf=(l,f)=>f.tr!=null?f.tr:TR[l.id];
 const travel=l=>{const f=(bestFlight(l)||flights(l)[0])[1];return Math.round((f.t+trOf(l,f))*4)/4;};
@@ -1303,7 +1330,7 @@ function openDetail(id){
 const MAPP={L0:-21.5,T:51.5,c:Math.cos(39*Math.PI/180),k:15.9846};
 const proj=(la,lo)=>[(lo-MAPP.L0)*MAPP.c*MAPP.k,(MAPP.T-la)*MAPP.k];
 /* [lat, lon, label anchor: r = vpravo, l = vlevo, b = pod] */
-const GEO={mallorca:[39.75,2.95,"r"],tenerife:[28.27,-16.6,"b"],grancanaria:[27.95,-15.6,"r"],lanzarote:[29.03,-13.65,[-4,-30,"start"]],
+const GEO={mallorca:[39.75,2.95,"r"],tenerife:[28.27,-16.6,[-6,28,"end"]],grancanaria:[27.95,-15.6,[4,28,"start"]],fuerteventura:[28.4,-14.0,"r"],lanzarote:[29.03,-13.65,[-4,-30,"start"]],
   lapalma:[28.68,-17.85,[4,-30,"end"]],costablanca:[38.64,0.05,"l"],girona:[41.98,2.82,"r"],andalusie:[36.75,-4.9,"b"],kypr:[34.85,32.9,"b"],
   madeira:[32.7,-16.95,"l"],algarve:[37.1,-8.5,"l"],sicilie:[37.75,15.0,"r"],kreta:[35.3,24.5,"b"],antalya:[36.9,30.7,"t"],
   marrakes:[31.63,-7.99,"r"],toskansko:[43.1,11.5,"r"],
@@ -1352,7 +1379,7 @@ const COORD={
 "Puerto de Mogán, Gran Canaria":[27.817,-15.765],"Mogán, Gran Canaria":[27.884,-15.725],
 "Costa Teguise, Lanzarote":[28.998,-13.497],"Teguise, Lanzarote":[29.060,-13.560],"Haría, Lanzarote":[29.145,-13.499],"Mirador del Río, Lanzarote":[29.214,-13.481],
 "Arrieta, Lanzarote":[29.136,-13.462],"Puerto del Carmen, Lanzarote":[28.922,-13.665],"La Geria, Lanzarote":[28.960,-13.720],"Mancha Blanca, Lanzarote":[29.042,-13.690],
-"Yaiza, Lanzarote":[28.956,-13.766],"Femés, Lanzarote":[28.914,-13.787],"Playa Blanca, Lanzarote":[28.862,-13.830],
+"Yaiza, Lanzarote":[28.956,-13.766],"Caleta de Fuste":[28.394,-13.857],"Antigua, Fuerteventura":[28.423,-14.012],"Betancuria":[28.425,-14.057],"Pájara":[28.350,-14.108],"Tuineje":[28.325,-14.047],"Ajuy":[28.399,-14.155],"Corralejo":[28.729,-13.868],"La Oliva":[28.611,-13.928],"Lajares":[28.678,-13.937],"Femés, Lanzarote":[28.914,-13.787],"Playa Blanca, Lanzarote":[28.862,-13.830],
 "Santa Cruz de La Palma":[28.683,-17.765],"Roque de los Muchachos":[28.754,-17.885],"Los Llanos de Aridane":[28.658,-17.918],"Puntagorda, La Palma":[28.774,-17.977],
 "Fuencaliente de La Palma":[28.490,-17.844],"El Paso, La Palma":[28.651,-17.880],
 "Calp, Alicante":[38.645,0.045],"Xaló, Alicante":[38.741,-0.012],"Coll de Rates":[38.739,-0.098],"Tàrbena, Alicante":[38.698,-0.098],"Altea, Alicante":[38.598,-0.051],
