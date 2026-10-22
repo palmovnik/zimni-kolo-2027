@@ -193,6 +193,30 @@ const APT={mallorca:"PMI",tenerife:"TFS",grancanaria:"LPA",lanzarote:"ACE",fuert
  girona:"BCN",andalusie:"AGP",kypr:"PFO",madeira:"FNC",algarve:"FAO",sicilie:"CTA",kreta:"CHQ",antalya:"AYT",marrakes:"RAK",
  toskansko:"FLR",gruzie:"KUT",jordansko:"AMM",sae:"DXB",oman:"MCT"};
 
+/* Pro koho je lokalita: jednovětné shrnutí podle údajů na stránce (výhody, nevýhody, tipy a zdroje) */
+const WHO={
+ mallorca:"Pro všechny výkonnosti: hory i roviny a nejlepší zázemí. Známe ji, letos spíš jako záloha.",
+ tenerife:"Pro vrchaře, kteří chtějí jistotu tepla v lednu a jedno obří stoupání na Teide.",
+ grancanaria:"Pro vrchaře: serpentiny ve vnitrozemí a nejsušší počasí z Kanár.",
+ lanzarote:"Pro tempo a kilometry v teple bez dlouhých kopců. Kdo nesnáší vítr, ať volí jinde.",
+ fuerteventura:"Pro pohodové kilometry v poušti s mírnými kopci. Hlavním soupeřem je vítr.",
+ lapalma:"Jen pro silnou partu vrchařů: každá jízda je dlouhé stoupání a cesta tam zabere den.",
+ costablanca:"Pro celou partu: silnice jako pro profíky, kopce i rovinky, krátký let přes Bratislavu.",
+ girona:"Pro milovníky jídla, kaváren a gravelu. Teplo až od dubna.",
+ andalusie:"Pro dlouhá táhlá stoupání, tapas a kulturu. Přímé lety ze všech tří letišť.",
+ kypr:"Pro objevitele: prázdné silnice, Troodos a meze, ideálně březen až duben.",
+ madeira:"Jen pro silné vrchaře nebo na e-kolech: stoupání 10–20 % a dramatická příroda.",
+ algarve:"Pro smíšenou partu a gravel: mírné kopce, nízké ceny, z Prahy přes Lisabon.",
+ sicilie:"Pro milovníky jídla a vulkánů: Etna, víno a italská kuchyně, ideálně duben až květen.",
+ kreta:"Od poloviny dubna pro prázdné horské silnice a levné tavérny.",
+ antalya:"Pro levný tréninkový kemp v hotelu s polopenzí. Jídlo a krajina jsou slabší.",
+ marrakes:"Pro dobrodruhy s agenturou a doprovodným autem: velehory a slunce.",
+ toskansko:"Pro milovníky jídla a gravelu na přelomu dubna a května.",
+ gruzie:"Pro objevitele a milovníky vína, až od konce dubna, nejlépe s místní agenturou.",
+ jordansko:"Pro dobrodružnou výpravu v únoru a březnu s cestovkou: pouště a kaňony.",
+ sae:"Pro jistotu tepla v lednu a pár perfektních kopců z UAE Tour. Drahé.",
+ oman:"Spíš na delší výpravu: daleko, drahé a od dubna horko."};
+
 const S_EST="odhad (bez ověřeného zdroje)";
 
 /* d: true = přímý let ověřený pro zimu 2026/27 nebo letní řád, "s" = přímý jen sezónně / neověřeno, false = s přestupem

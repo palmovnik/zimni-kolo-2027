@@ -178,6 +178,12 @@ svg.prof text{fill:var(--muted);font:11px var(--f-body)}
 .varea{font:600 11px/1.6 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-decoration:none!important}
 @media (max-width:640px){.vgrp li label{grid-template-columns:auto 1fr}.varea{grid-column:2}}
 
+.who{margin:0;font-size:14.5px;font-weight:500}
+.crec{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
+.crec li{padding:5px 8px;border-left:3px solid var(--line);background:var(--surface-2);border-radius:0 6px 6px 0}
+.crec li.bad{border-left-color:var(--bad)}.crec li.good{border-left-color:var(--good)}
+.crec a{font-size:11px;font-weight:700;color:var(--muted);text-decoration:none;white-space:nowrap}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -639,6 +645,9 @@ function renderGrid(){
     <div class="ph" data-ph="${l.id}" data-tags='${tags}'></div>
     <div class="cbody">
       <div class="ctitle"><div><h3>${l.name}</h3><div class="sub">${l.region}</div></div>${idxBox(l)}</div>
+      <p class="who">${WHO[l.id]||""}</p>
+      ${(()=>{const r=REC[l.id]||[],pick=[r.find(x=>x[0]==="pozor"),r.find(x=>x[0]==="tip")].filter(Boolean);
+        return pick.length?`<ul class="crec">${pick.map(([k,t,lang,st,u])=>`<li class="${k==="pozor"?"bad":"good"}"><span>${t}</span> <a href="${u}" target="_blank" rel="noopener" title="${st}">${lang} ↗</a></li>`).join("")}</ul>`:""})()}
       <div class="wx">
         <div><b>${l.hi[m]}°</b><small>max</small></div><div><b>${l.lo[m]}°</b><small>min</small></div>
         <div><b>${String(l.rain[m]).replace(".",",")}</b><small>dny deště</small></div><div><b>${String(l.sun[m]).replace(".",",")}</b><small>h slunce</small></div>
