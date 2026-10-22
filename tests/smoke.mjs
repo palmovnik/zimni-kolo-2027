@@ -18,6 +18,7 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
   await page.route(/commons\.wikimedia\.org|wikipedia\.org/, (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
   await page.route(/brouter\.de\/brouter\?/, (r) => r.fulfill({ status: 503, body: '' }));
   await page.route(/tile\.openstreetmap|upload\.wikimedia/, (r) => r.fulfill({ status: 204, body: '' }));
+  await page.route(/supabase\.co/, (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '[]' }));
   await page.goto(url);
   await page.waitForTimeout(300);
 

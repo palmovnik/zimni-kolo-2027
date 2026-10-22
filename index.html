@@ -1161,7 +1161,7 @@ document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.datase
 
 /* ---------- hlasování: D21 (Janečkova metoda), hlasy se ukládají do Supabase ---------- */
 /* Supabase: Project URL a veřejný klíč (anon / publishable). Bez nich se hlasování jen zobrazí bez ukládání. Nastavení viz CLAUDE.md. */
-const VOTE_CFG={url:"",key:""};
+const VOTE_CFG={url:"https://hksefwkynqjldpkxqvir.supabase.co",key:"sb_publishable_ZsxeV7BwLI8Y779uacDqog_RKIqLORu"};
 const VPLUS=3,VMIN=1,VMIN_AFTER=2;
 const V={all:[],me:{plus:[],minus:[]},name:"",msg:"",err:false,dirty:false,busy:false};
 try{V.name=localStorage.getItem("zk27n")||""}catch(e){}
