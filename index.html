@@ -133,6 +133,12 @@ header.top{padding-block:28px 18px}
 .wxleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:2px}
 .wxleg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
 
+sup.cit{font:600 10px/1 var(--f-body);color:var(--muted);margin-left:2px;vertical-align:super}
+.srclist{border-top:1px solid var(--line);padding-top:12px}
+.srclist ol{margin:6px 0 0;padding-left:22px;columns:2 300px;column-gap:28px;font-size:12px;color:var(--muted)}
+.srclist li{break-inside:avoid;margin-bottom:3px}
+.srclist a{color:var(--muted)}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -1093,6 +1099,11 @@ const fmtH=t=>{const h=Math.floor(t),m=Math.round((t-h)*60);if(!h)return m+" min
 const dirTxt=d=>d===true?["přímý","y"]:d==="s"?["přímý jen sezónně / neověřeno","s"]:["s přestupem","n"];
 const srcLinks=keys=>(keys||[]).filter(k=>SRC[k]).map(k=>`<a href="${SRC[k].u}" target="_blank" rel="noopener">${SRC[k].t}</a>`).join(" · ");
 const fmtS=v=>String(v).replace(".",",");
+/* Číslované zdroje v detailu: cite() vrátí horní index a zdroj zařadí do seznamu na konci detailu */
+let CIT=null;
+function cite(items){if(!CIT)return "";const n=(items||[]).map(k=>typeof k==="string"?(SRC[k]?{k,t:SRC[k].t,u:SRC[k].u}:null):{k:k.u,t:k.t,u:k.u}).filter(Boolean).map(o=>{if(!(o.k in CIT.idx)){CIT.list.push(o);CIT.idx[o.k]=CIT.list.length}return CIT.idx[o.k]});
+  return n.length?`<sup class="cit">${[...new Set(n)].sort((a,b)=>a-b).join(",")}</sup>`:"";}
+function citList(){return CIT&&CIT.list.length?`<div class="srclist"><div class="eyebrow">Zdroje</div><ol>${CIT.list.map(o=>`<li><a href="${o.u}" target="_blank" rel="noopener">${o.t}</a></li>`).join("")}</ol></div>`:"";}
 const hillScore=l=>l.sc[2];
 
 /* ---------- colors (explicit, readable with dark text in both themes) ---------- */
@@ -1315,6 +1326,7 @@ function openDetail(id){
     ${l.lo.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--road)"/><text x="${x(i)}" y="${y(v)+17}" text-anchor="middle" style="fill:var(--road);font:700 13px var(--f-body)">${lab(v)}</text>`).join("")}
     ${MS.map((t,i)=>`<text x="${x(i)}" y="${H-2}" text-anchor="middle" style="fill:${i===m?"var(--accent)":"var(--muted)"};font:${i===m?"700 ":""}12px var(--f-body)">${t}</text>`).join("")}</svg>
     <div class="wxleg"><span><i style="background:var(--accent)"></i>průměrné denní maximum</span><span><i style="background:var(--road)"></i>průměrné noční minimum</span></div>`})();
+  CIT={list:[],idx:{}};
   $("#dlgBody").innerHTML=`<div class="gal">${l.rt.ph.slice(0,5).map((_,k)=>`<div class="ph" data-k="${k}"></div>`).join("")}</div>
   <div class="dbody">
     <div class="ctitle"><div><div class="eyebrow">${l.region}${l.known?" · už jsme byli":""}</div><h2>${l.name}</h2>
@@ -1329,14 +1341,14 @@ function openDetail(id){
         <tr><td>Déšť (dny)</td>${l.rain.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Slunce (h)</td>${l.sun.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr></table></div>
-        <p class="srcline">Stanice: ${l.cl.st}${l.cl.est?" · hodnoty jsou orientační normály, v tomto průzkumu neověřené":""}${l.cl.src.length?"<br>Zdroje: "+srcLinks(l.cl.src):""}</p></div>
+        <p class="srcline">Stanice: ${l.cl.st}${l.cl.est?" · hodnoty jsou orientační normály, v tomto průzkumu neověřené":""}${cite(l.cl.src)}</p></div>
       <div><div class="eyebrow" style="margin-bottom:6px">Klasická stoupání · ${l.elev}</div>
-        <table class="climbs">${l.climbs.map(c=>`<tr><td>${SRC[c[4]]?`<a href="${SRC[c[4]].u}" target="_blank" rel="noopener">${c[0]} ↗</a>`:c[0]}</td><td class="num">${c[1]}</td><td class="num">${c[2]}</td><td class="num">${c[3]}</td></tr>`).join("")}</table>
-        <p class="srcline">Údaje ze stránek stoupání (odkaz u názvu). Denní převýšení ${l.elev} je odhad.</p></div>
+        <table class="climbs">${l.climbs.map(c=>`<tr><td>${c[0]}${cite([c[4]])}</td><td class="num">${c[1]}</td><td class="num">${c[2]}</td><td class="num">${c[3]}</td></tr>`).join("")}</table>
+        <p class="srcline">Denní převýšení ${l.elev} je odhad.</p></div>
     </div>
     <div class="two">
       <div><div class="eyebrow" style="margin-bottom:6px">Doprava</div>
-        ${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}.</span>${f.src.length?`<br><span class="srcline">Zdroj: ${srcLinks(f.src)}</span>`:`<br><span class="srcline">Bez ověřeného zdroje pro 2026/27.</span>`}</p>`}).join("")}
+        ${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}${f.src.length?"":" · neověřeno"}.${cite(f.src)}</span></p>`}).join("")}
         <p style="margin:0"><b>Transfer:</b> ${l.transfer}</p></div>
       <div><div class="eyebrow" style="margin-bottom:6px">Odhad ceny na osobu · ${S.n} nocí · ${S.ap==="ALL"?"levnější letiště":S.ap}</div>
         <p style="margin:0 0 6px;font:700 28px var(--f-display)">${fmtK(c[0])} – ${fmtK(c[1])} Kč</p>
@@ -1346,16 +1358,16 @@ function openDetail(id){
           <tr><td>Karbonové kolo ${l.bike[0]}–${l.bike[1]} €/den</td><td class="num">${k(p.bike[0])}–${k(p.bike[1])}</td></tr>
           <tr><td>Transfer / auto na osobu</td><td class="num">${k(p.car[0])}–${k(p.car[1])}</td></tr>
           <tr><td>Jídlo a pití ${l.food[0]}–${l.food[1]} €/den</td><td class="num">${k(p.food[0])}–${k(p.food[1])}</td></tr></table>`})()}
-        <p class="srcline">${l.cs.hotel}.${l.cs.src.length?"<br>Zdroje: "+srcLinks(l.cs.src):""}</p></div>
+        <p class="srcline">${l.cs.hotel}.${cite(l.cs.src)}</p></div>
     </div>
     <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div><div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
     <div><div class="eyebrow" style="margin-bottom:4px">Základní trasy · mapa OpenStreetMap a GPX ke stažení</div>
       <div class="routes">${l.rt.r.map(r=>`<div class="route-row"><b>${r[0]}</b><span>${r[1]} km</span><span>${fmtN(r[2])} m</span><button class="btn sm pri" data-route="${l.id}:${l.rt.r.indexOf(r)}">Mapa + GPX</button></div>`).join("")}</div>
       <p style="margin:6px 0 0;font-size:13px;color:var(--muted)">Délky a převýšení jsou přibližné. Trasy si před jízdou upravte a uložte do Komootu nebo Garminu.</p></div>
     <div class="gastro"><div class="gs"><b>${fmtS(l.g.s)}/5</b><span class="price">${l.g.p}</span></div>
-      <div><div class="eyebrow">Gastro</div><p>${l.g.n}</p>
+      <div><div class="eyebrow">Gastro</div><p>${l.g.n}${cite(l.g.src)}</p>
         <div class="terrain" style="margin-top:8px">${l.g.d.map(d=>`<span class="chip">${d}</span>`).join("")}</div>
-        <p style="font-size:13.5px;color:var(--muted)">Pití: ${l.g.w}</p>${l.g.src.length?`<p class="srcline">Zdroje: ${srcLinks(l.g.src)}</p>`:""}</div></div>
+        <p style="font-size:13.5px;color:var(--muted)">Pití: ${l.g.w}</p></div></div>
     ${recHTML(l)}
     <div><div class="eyebrow" style="margin-bottom:6px">Fotky z kola, profily a popisy tras na cyklistických webech</div>
       <div class="webcards">${l.web.filter(k=>SRC[k]).map(k=>`<a class="webcard" href="${SRC[k].u}" target="_blank" rel="noopener"><b>${SRC[k].t.split(":")[0]}</b><span>${SRC[k].t.split(":").slice(1).join(":").trim()||"stránka trasy"}</span></a>`).join("")}</div></div>
@@ -1368,7 +1380,9 @@ function openDetail(id){
       <a href="https://www.strava.com/search?q=${encodeURIComponent(l.name)}" target="_blank" rel="noopener">Strava ↗</a>
       <a href="https://www.komoot.com/discover/${encodeURIComponent(l.name)}/@${GEO[l.id][0]},${GEO[l.id][1]}/tours?sport=racebike" target="_blank" rel="noopener">Trasy na Komoot ↗</a>
     </div>
+    ${citList()}
   </div>`;
+  CIT=null;
   $("#dlgBody").querySelectorAll(".gal .ph").forEach(el=>photo(el,l,+el.dataset.k));
   const d=$("#dlg"); if(!d.open) d.showModal(); d.scrollTop=0;
 }
@@ -1545,7 +1559,7 @@ const REC_KIND={tip:["Doporučení","good"],pozor:["Pozor","bad"],zazitek:["Zku�
 function recHTML(l){const r=REC[l.id]||[];if(!r.length)return "";
   return `<div><div class="eyebrow" style="margin-bottom:6px">Co říkají cyklistické weby a jezdci · ${r.length} ${r.length<5?"postřehy":"postřehů"}</div>
     <ul class="recs">${r.map(([k,t,lang,st,u])=>`<li class="rec ${REC_KIND[k]?REC_KIND[k][1]:""}"><span class="rk">${REC_KIND[k]?REC_KIND[k][0]:k}</span><span class="rt">${t}</span>
-      <a class="rs" href="${u}" target="_blank" rel="noopener"><span class="lang">${lang}</span>${st} ↗</a></li>`).join("")}</ul></div>`;}
+      <span class="rs"><span class="lang">${lang}</span>${cite([{t:st,u}])}</span></li>`).join("")}</ul></div>`;}
 function idxBreakdown(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+w[F.k],0)||1,tot=total(l,m);
   const rows=FACTORS.map(F=>({F,v:p[F.k].v,x:p[F.k].x,wp:w[F.k]/sum,pts:p[F.k].v*w[F.k]/sum}));
   const act=rows.filter(r=>r.wp>0),best=act.reduce((a,r)=>r.v>a.v?r:a,act[0]),worst=act.reduce((a,r)=>r.v<a.v?r:a,act[0]);
