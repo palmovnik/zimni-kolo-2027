@@ -647,16 +647,20 @@ function fallbackSVG(l,k){
   <path d="M0 180 L0 140 Q80 120 160 138 T320 132 L320 180Z" fill="${s==="sea"?"hsl(205,55%,45%)":"hsl(30,45%,55%)"}"/>
 </svg>`;
 }
+const norm=t=>t.replace(/ı/g,"i").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+/* Hledá fotku konkrétní trasy: přednost má snímek na šířku, jehož název souboru obsahuje klíčové slovo místa (např. „Calobra“). */
 function commonsImg(q){
-  const key="zk27c:"+q;
+  const key="zk27c2:"+q;
   if(imgCache[key]) return imgCache[key];
   let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||"null")}catch(e){}
   if(cached) return imgCache[key]=Promise.resolve(cached);
-  const u="https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch="+
+  const kw=norm(q.split(" ").find(w=>w.length>=4)||q);
+  const u="https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsrsearch="+
     encodeURIComponent(q+" filetype:bitmap")+"&prop=imageinfo&iiprop=url|size&iiurlwidth=960";
   return imgCache[key]=fetch(u).then(r=>r.ok?r.json():null).then(j=>{
-    const ps=j&&j.query?Object.values(j.query.pages).sort((a,b)=>a.index-b.index):[];
-    const p=ps.find(p=>p.imageinfo&&p.imageinfo[0].thumburl&&p.imageinfo[0].width>=p.imageinfo[0].height);
+    const ps=(j&&j.query?Object.values(j.query.pages).sort((a,b)=>a.index-b.index):[])
+      .filter(p=>p.imageinfo&&p.imageinfo[0].thumburl&&p.imageinfo[0].width>=p.imageinfo[0].height*1.15&&!/map|karte|mapa|logo|profile|profil|svg/i.test(p.title));
+    const p=ps.find(p=>norm(p.title).includes(kw))||ps[0];
     if(!p) return null;
     const o={src:p.imageinfo[0].thumburl,page:p.imageinfo[0].descriptionurl,title:p.title.replace(/^File:/,"").replace(/\.[a-z]+$/i,"")};
     try{localStorage.setItem(key,JSON.stringify(o))}catch(e){} return o;}).catch(()=>null);
