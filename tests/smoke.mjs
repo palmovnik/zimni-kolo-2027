@@ -49,6 +49,10 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
   for (const m of ['0', '3']) await page.click(`[data-m="${m}"]`);
   for (const ap of ['PRG', 'VIE', 'BTS', 'ALL']) await page.click(`[data-ap=${ap}]`);
 
+  // hlasování bez jména: klik na + u karty nesmí nic uložit, ale má nabídnout zadání jména
+  await page.click('#grid [data-v]');
+  if (!(await page.$('#vName'))) fail(`[${width}px] po kliknutí na hlas bez jména se neukázalo pole pro jméno`);
+
   // detail lokality, okno vah, okno trasy
   await page.click('#grid [data-open]');
   await page.waitForTimeout(200);

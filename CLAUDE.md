@@ -57,6 +57,10 @@ V `index.html`:
 
 - Metoda D21: 3 kladné hlasy a 1 záporný na osobu, záporný až po 2 kladných, jedné lokalitě nejvýš
   jeden hlas. Konstanty `VPLUS`, `VMIN`, `VMIN_AFTER` v `index.html`.
+- Hlasuje se přímo u lokalit: `vCtl(l)` vrací tlačítka + / − se součtem a jmény (karty, detail,
+  srovnání, tabulka, výsledky v záložce Hlasování); jméno a zbývající hlasy jsou v liště `#vbar`
+  nahoře (na telefonu dole). Hlas se uloží hned po kliknutí; po změně se volá `vRefresh()`, které
+  přepíše jen prvky `[data-vl]`, lištu a mapu. Nová místa s hlasy přidávej přes `vCtl`.
 - Hlasy jsou v Supabase (tabulka `votes`), stránka je čte a zapisuje přes REST s veřejným klíčem
   v `VOTE_CFG` (`url` = Project URL, `key` = anon / publishable klíč). Tajný (service_role) klíč do
   repozitáře nikdy nedávat. Bez `VOTE_CFG` se záložka zobrazí, ale nic neukládá.
