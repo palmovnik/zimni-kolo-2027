@@ -105,6 +105,17 @@ header.top{padding-block:28px 18px}
 .webcard span{font-size:13px}
 .cardweb{font-size:13px;font-weight:600}
 
+.ibd{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:10px}
+.ibd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.ibd-head p{margin:4px 0 0;font-size:14px}
+.ibd-rows{display:grid;gap:8px}
+.ibd-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(80px,1fr) repeat(3,54px);gap:10px;align-items:center}
+.ibd-row.off{opacity:.45}
+.ibd-l{min-width:0}.ibd-l b{display:block;font-size:14px}.ibd-l small{color:var(--muted);font-size:12px}
+.ibd-bar{height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}.ibd-bar i{display:block;height:100%}
+.ibd-n{text-align:right}.ibd-n b{display:block;font:700 17px/1 var(--f-display)}.ibd-n small{font-size:10.5px;color:var(--muted)}
+@media (max-width:640px){.ibd-row{grid-template-columns:1fr repeat(3,48px)}.ibd-bar{grid-column:1/-1;order:5}}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -1277,6 +1288,7 @@ function openDetail(id){
     <div class="ctitle"><div><div class="eyebrow">${l.region}${l.known?" · už jsme byli":""}</div><h2>${l.name}</h2>
       <div class="terrain" style="margin-top:8px">${l.type.map(t=>`<span class="chip">${t}</span>`).join("")}${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></div>${idxBox(l)}</div>
     <div class="tip">${l.tip}</div>
+    ${idxBreakdown(l)}
     <div class="two">
       <div><div class="eyebrow" style="margin-bottom:6px">Teploty max / min po měsících</div>${spark}
         <div class="scroll"><table class="climbs" style="margin-top:6px"><tr><td></td>${MS.map((x,i)=>`<td class="num" style="${i===m?"color:var(--accent);font-weight:600":""}">${x}</td>`).join("")}</tr>
@@ -1493,6 +1505,16 @@ function itipHTML(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+
   ${FACTORS.map(F=>`<div class="ir"><span>${F.lbl}</span><span class="num">${p[F.k].v}</span><span class="w">${Math.round(w[F.k]/sum*100)} %</span>
     <span class="bar"><i style="width:${p[F.k].v}%"></i></span><small>${p[F.k].x}</small></div>`).join("")}
   <div class="foot">Index = vážený průměr skóre. <button data-wopen="1">Upravit váhy</button></div>`;}
+/* Rozpad indexu přímo v detailu lokality: skóre, váha a body, které kritérium přidává */
+function idxBreakdown(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+w[F.k],0)||1,tot=total(l,m);
+  const rows=FACTORS.map(F=>({F,v:p[F.k].v,x:p[F.k].x,wp:w[F.k]/sum,pts:p[F.k].v*w[F.k]/sum}));
+  const act=rows.filter(r=>r.wp>0),best=act.reduce((a,r)=>r.v>a.v?r:a,act[0]),worst=act.reduce((a,r)=>r.v<a.v?r:a,act[0]);
+  return `<div class="ibd"><div class="ibd-head"><div><div class="eyebrow">Proč má ${l.name} index ${tot}</div>
+    <p>${MONTHS[m]}, odlet ${S.ap==="ALL"?"nejrychlejší z Prahy, Vídně a Bratislavy":APN[S.ap]}, ${S.n} nocí. Nejvíc táhne nahoru <b>${best.F.lbl.toLowerCase()}</b> (${best.v}), nejvíc dolů <b>${worst.F.lbl.toLowerCase()}</b> (${worst.v}).</p></div>${wBtn("upravit váhy")}</div>
+    <div class="ibd-rows">${rows.map(r=>`<div class="ibd-row${r.wp===0?" off":""}"><div class="ibd-l"><b>${r.F.lbl}</b><small>${r.x}</small></div>
+      <div class="ibd-bar"><i style="width:${r.v}%;background:${METRICS.tot.col(r.v)}"></i></div>
+      <div class="ibd-n"><b>${r.v}</b><small>skóre</small></div><div class="ibd-n"><b>${Math.round(r.wp*100)} %</b><small>váha</small></div><div class="ibd-n"><b>+${fmtS(r.pts.toFixed(1))}</b><small>bodů</small></div></div>`).join("")}</div>
+    <p class="srcline">Index = součet bodů (skóre × váha). Jak se jednotlivá skóre počítají, popisuje okno „Váhy indexu“.</p></div>`;}
 let itipFor=null,itipPinned=false;
 function showItip(el,pin){const l=byId(el.dataset.idx),t=$("#itip");itipFor=el;itipPinned=!!pin;
   const host=el.closest("dialog")||document.body;if(t.parentNode!==host)host.append(t);
@@ -1517,11 +1539,12 @@ function renderWeights(){const sum=FACTORS.reduce((a,F)=>a+S.w[F.k],0)||1;
 function updateWeightOutputs(){const sum=FACTORS.reduce((a,F)=>a+S.w[F.k],0)||1;
   FACTORS.forEach(F=>$("#o-"+F.k).textContent=Math.round(S.w[F.k]/sum*100)+" %");
   document.querySelectorAll("#wPresets button").forEach(b=>{const w=PRESETS[+b.dataset.preset][1];b.setAttribute("aria-pressed",FACTORS.every(F=>w[F.k]===S.w[F.k]))});}
+function refreshDetail(){const d=$("#dlg"),h=d.open&&d.querySelector("h2");if(h){const l=LOC.find(x=>x.name===h.textContent);if(l){const st=d.scrollTop;openDetail(l.id);d.scrollTop=st}}}
 function openWeights(){hideItip();renderWeights();const d=$("#wdlg");if(!d.open)d.showModal();}
 $("#wOpen").addEventListener("click",openWeights);
-$("#wSliders").addEventListener("input",e=>{const k=e.target.dataset.w;if(!k)return;S.w[k]=+e.target.value;updateWeightOutputs();render();});
-$("#wPresets").addEventListener("click",e=>{const b=e.target.closest("[data-preset]");if(!b)return;S.w={...PRESETS[+b.dataset.preset][1]};renderWeights();render();});
-$("#wReset").addEventListener("click",()=>{S.w={...W0};renderWeights();render();});
+$("#wSliders").addEventListener("input",e=>{const k=e.target.dataset.w;if(!k)return;S.w[k]=+e.target.value;updateWeightOutputs();render();refreshDetail();});
+$("#wPresets").addEventListener("click",e=>{const b=e.target.closest("[data-preset]");if(!b)return;S.w={...PRESETS[+b.dataset.preset][1]};renderWeights();render();refreshDetail();});
+$("#wReset").addEventListener("click",()=>{S.w={...W0};renderWeights();render();refreshDetail();});
 $("#wDone").addEventListener("click",()=>$("#wdlg").close());$("#wdlgX").addEventListener("click",()=>$("#wdlg").close());
 $("#wdlg").addEventListener("click",e=>{if(e.target.id==="wdlg")e.target.close()});
 document.addEventListener("click",e=>{if(e.target.closest("[data-wopen]"))openWeights()});
