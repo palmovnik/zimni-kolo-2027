@@ -133,7 +133,9 @@ header.top{padding-block:28px 18px}
 .wxleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:2px}
 .wxleg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
 
-sup.cit{font:600 10px/1 var(--f-body);color:var(--muted);margin-left:2px;vertical-align:super}
+sup.cit{font:600 11px/1 var(--f-body);color:var(--muted);margin-left:2px;vertical-align:super}
+sup.cit a{color:var(--road);text-decoration:none;padding:1px 2px;border-radius:3px}
+sup.cit a:hover,sup.cit a:focus-visible{background:var(--chip);text-decoration:underline}
 .srclist{border-top:1px solid var(--line);padding-top:12px}
 .srclist ol{margin:6px 0 0;padding-left:22px;columns:2 300px;column-gap:28px;font-size:12px;color:var(--muted)}
 .srclist li{break-inside:avoid;margin-bottom:3px}
@@ -1287,7 +1289,8 @@ const fmtS=v=>String(v).replace(".",",");
 /* Číslované zdroje v detailu: cite() vrátí horní index a zdroj zařadí do seznamu na konci detailu */
 let CIT=null;
 function cite(items){if(!CIT)return "";const n=(items||[]).map(k=>typeof k==="string"?(SRC[k]?{k,t:SRC[k].t,u:SRC[k].u}:null):{k:k.u,t:k.t,u:k.u}).filter(Boolean).map(o=>{if(!(o.k in CIT.idx)){CIT.list.push(o);CIT.idx[o.k]=CIT.list.length}return CIT.idx[o.k]});
-  return n.length?`<sup class="cit">${[...new Set(n)].sort((a,b)=>a-b).join(",")}</sup>`:"";}
+  const esc=t=>String(t).replace(/"/g,"&quot;");
+  return n.length?`<sup class="cit">${[...new Set(n)].sort((a,b)=>a-b).map(i=>{const o=CIT.list[i-1];return `<a href="${o.u}" target="_blank" rel="noopener" title="${esc(o.t)}">${i}</a>`}).join(",")}</sup>`:"";}
 function citList(){return CIT&&CIT.list.length?`<div class="srclist"><div class="eyebrow">Zdroje</div><ol>${CIT.list.map(o=>`<li><a href="${o.u}" target="_blank" rel="noopener">${o.t}</a></li>`).join("")}</ol></div>`:"";}
 const hillScore=l=>l.sc[2];
 
@@ -1750,7 +1753,7 @@ const REC_KIND={tip:["Doporučení","good"],pozor:["Pozor","bad"],zazitek:["Zku�
 function recHTML(l){const r=REC[l.id]||[];if(!r.length)return "";
   return `<div><div class="eyebrow" style="margin-bottom:6px">Co říkají cyklistické weby a jezdci · ${r.length} ${r.length<5?"postřehy":"postřehů"}</div>
     <ul class="recs">${r.map(([k,t,lang,st,u])=>`<li class="rec ${REC_KIND[k]?REC_KIND[k][1]:""}"><span class="rk">${REC_KIND[k]?REC_KIND[k][0]:k}</span><span class="rt">${t}</span>
-      <span class="rs"><span class="lang">${lang}</span>${cite([{t:st,u}])}</span></li>`).join("")}</ul></div>`;}
+      <span class="rs"><span class="lang">${lang}</span><a href="${u}" target="_blank" rel="noopener">${st} ↗</a>${cite([{t:st,u}])}</span></li>`).join("")}</ul></div>`;}
 function idxBreakdown(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+w[F.k],0)||1,tot=total(l,m);
   const rows=FACTORS.map(F=>({F,v:p[F.k].v,x:p[F.k].x,wp:w[F.k]/sum,pts:p[F.k].v*w[F.k]/sum}));
   const act=rows.filter(r=>r.wp>0),best=act.reduce((a,r)=>r.v>a.v?r:a,act[0]),worst=act.reduce((a,r)=>r.v<a.v?r:a,act[0]);
