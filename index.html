@@ -206,6 +206,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ctl>label.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
 .seg{display:inline-flex;background:var(--chip);border-radius:8px;padding:3px;gap:2px}
+#metricSeg{display:flex;flex-wrap:wrap;width:fit-content;max-width:100%}
 .seg button{border:0;background:transparent;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 .seg button:focus-visible,.tab:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1096,6 +1097,7 @@ $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()})
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
 $("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
 const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni"].includes(h))S.tab=h;
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 render();
 try{const ms=$("#mapscroll");if(ms.scrollWidth>ms.clientWidth)ms.scrollLeft=(ms.scrollWidth-ms.clientWidth)*.2}catch(e){}
 </script>

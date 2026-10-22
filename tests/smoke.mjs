@@ -39,6 +39,8 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
   for (const tab of ['pocasi', 'srovnani', 'tabulka', 'overeni', 'lokality']) {
     const el = await page.$(`[data-tab=${tab}]`);
     if (el) await el.click(); else if (tab !== 'overeni') fail(`chybí záložka ${tab}`);
+    const tw = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (tw > width + 1) fail(`[${width}px] záložka ${tab} se posouvá do strany (šířka ${tw})`);
   }
   for (const m of ['0', '3']) await page.click(`[data-m="${m}"]`);
   for (const ap of ['PRG', 'VIE', 'BTS', 'ALL']) await page.click(`[data-ap=${ap}]`);
