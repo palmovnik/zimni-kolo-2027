@@ -104,6 +104,12 @@ main{padding-block:20px 60px}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn[aria-pressed="true"]{background:var(--road);border-color:var(--road);color:var(--surface)}
 .terrain{display:flex;gap:5px;flex-wrap:wrap}
+.price{font-weight:600;color:var(--warn);margin-left:4px;letter-spacing:.05em}
+.dish{font-size:13px;color:var(--muted);margin-top:2px}
+.gastro{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;background:var(--surface-2);border-radius:10px;padding:14px 16px}
+.gastro .gs{text-align:center;font-family:var(--f-display)}
+.gastro .gs b{display:block;font-size:34px;line-height:1}
+.gastro p{margin:6px 0 0;font-size:14.5px}
 .chip{font-size:12px;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--ink)}
 
 /* Weather */
@@ -186,7 +192,7 @@ footer p{max-width:90ch}
 <body>
 
 <header class="top wrap">
-  <div class="eyebrow">Silniční kola · leden – květen · 4–5 nocí · 5–6 lidí</div>
+  <div class="eyebrow">Silniční kola · gastro · leden – květen · 4–5 nocí · 5–6 lidí</div>
   <h1>Zimní <span>kolo</span> 2027</h1>
   <p>Přehled lokalit, kam se dá z Prahy nebo z Vídně odletět za teplem a kopci. Vyber měsíc a letiště: karty, heatmapa i ceny se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko.</p>
   <svg class="elev" viewBox="0 0 1000 38" preserveAspectRatio="none" aria-hidden="true"><path class="base" d="M0 37H1000"/><path d="M0 34 L60 33 L110 30 L150 22 L190 12 L215 6 L240 14 L290 28 L340 31 L380 26 L430 18 L470 24 L520 32 L570 30 L610 20 L650 9 L680 3 L705 9 L750 25 L800 33 L850 30 L890 22 L930 27 L1000 34"/></svg>
@@ -206,7 +212,7 @@ footer p{max-width:90ch}
       <select id="sortSel">
         <option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option>
         <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší let</option><option value="price">Nejlevnější</option>
-        <option value="hills">Nejvíc kopců</option><option value="name">Abecedně</option>
+        <option value="hills">Nejvíc kopců</option><option value="food">Nejlepší jídlo</option><option value="name">Abecedně</option>
       </select></div>
   </div>
   <div class="wrap"><nav class="tabs" role="tablist">
@@ -448,6 +454,26 @@ const LOC=[
  tip:"Termín na přelomu dubna a května. Agroturistika pro 6 lidí v Val d'Orcia, Strade Bianche na gravelu."}
 ];
 
+/* Gastro: s = kvalita jídla 1–5, d = co ochutnat, w = pití, p = cenová hladina, n = komentář */
+const GASTRO={
+ mallorca:{s:4,p:"€€",d:["Pa amb oli","Sobrasada","Frit mallorquí","Ensaïmada"],w:"víno z Binissalem, hierbas",n:"Tapas a trh Mercat de l'Olivar v Palmě. V resortech na severu průměr, nejlépe se jí ve vesnicích ve vnitrozemí."},
+ tenerife:{s:3,p:"€€",d:["Papas arrugadas s mojo","Grilovaná ryba","Kozí sýr","Kozí maso"],w:"vína z Tacoronte, barraquito",n:"Nejlepší zážitek jsou guachinches, domácí vinárny na severu ostrova. Jih je turistický."},
+ grancanaria:{s:3,p:"€€",d:["Papas arrugadas","Ropa vieja","Queso de flor","Bienmesabe"],w:"rum Arehucas, víno z Monte Lentiscal",n:"Poctivé vesnické restaurace ve vnitrozemí (Tejeda, Artenara), na jihu převážně turistická menu."},
+ lanzarote:{s:3,p:"€€",d:["Lapas (přílipky)","Sancocho","Kozí sýr","Batáty s mojo"],w:"vulkanická Malvasía z La Geria",n:"Návštěva vinařství v La Geria je zážitek. Jinak hlavně turistické restaurace, pár dobrých rybích v El Golfo."},
+ lapalma:{s:3,p:"€",d:["Mojo rojo a verde","Kozí sýr (DOP)","Almendrados","Grilovaná ryba"],w:"Malvasía z Fuencaliente",n:"Jednoduchá poctivá kuchyně a nízké ceny, ale malý výběr podniků."},
+ costablanca:{s:4,p:"€€",d:["Paella a arroz a banda","Fideuà","Červené krevety z Dénie","Turrón"],w:"Moscatel, vína z Alicante",n:"Kolébka rýžových jídel. Dénia je kreativní město gastronomie UNESCO. Cyklokavárny pro profíky v Calpe."},
+ girona:{s:5,p:"€€€",d:["Katalánské tapas","Pa amb tomàquet","Suquet de peix","Crema catalana"],w:"víno Empordà, cava",n:"El Celler de Can Roca (dvakrát nejlepší restaurace světa), cyklokavárny La Fábrica a Espresso Mafia. Nejlepší kafe a brunche ze všech lokalit."},
+ andalusie:{s:5,p:"€",d:["Jamón ibérico","Pescaíto frito","Salmorejo","Espetos (sardinky na špízu)"],w:"šerry, vína z Rondy",n:"Tapas bary v Málaze a Rondě, nejlepší poměr cena/kvalita ve Španělsku. Večeře se začínají ve 21 h."},
+ kypr:{s:4,p:"€€",d:["Meze (15–20 chodů)","Halloumi","Kleftiko","Souvla"],w:"Commandaria, zivania",n:"Rybí nebo masové meze je ideální skupinová večeře po jízdě. Nejlepší tavérny jsou v horských vesnicích Troodosu (Omodos, Platres)."},
+ madeira:{s:4,p:"€€",d:["Espetada","Espada s banánem","Bolo do caco","Lapas"],w:"madeirské víno, poncha",n:"Výborné ryby a grilované maso. Poncha bary ve vesnicích jsou místní instituce."},
+ algarve:{s:4,p:"€",d:["Cataplana","Grilované sardinky","Polvo (chobotnice)","Pastel de nata"],w:"vinho verde, medronho",n:"Čerstvé ryby a mořské plody za rozumné ceny, skvělé pekárny. Kvalitní jídlo i v malých vesnicích."},
+ sicilie:{s:5,p:"€€",d:["Arancini","Pasta alla Norma","Cannoli a granita","Pistácie z Bronte"],w:"Etna Rosso a Bianco, Marsala",n:"Jedna z nejlepších kuchyní Itálie. Vinařství na svazích Etny, espresso a granita k snídani."},
+ kreta:{s:5,p:"€",d:["Dakos","Jehněčí z hor","Kalitsounia","Staka s vejci"],w:"raki, místní víno",n:"Krétská strava patří k nejzdravějším na světě. Rodinné tavérny, olivový olej všude, raki zdarma po jídle."},
+ antalya:{s:3,p:"€",d:["Kebab a pide","Piyaz","Gözleme","Baklava"],w:"ayran, raki, turecký čaj",n:"Ve městě a ve vesnicích výborné turecké jídlo. V all-inclusive hotelech průměr, vyplatí se chodit ven."},
+ marrakes:{s:4,p:"€",d:["Tajine","Kuskus","Tanjia","Pastilla"],w:"mátový čaj; alkohol jen v hotelech",n:"Náměstí Džemaa el-Fna a večeře v riadu. Pozor na hygienu u pouličního jídla před jízdou."},
+ toskansko:{s:5,p:"€€€",d:["Bistecca alla fiorentina","Pici cacio e pepe","Pecorino z Pienzy","Ribollita"],w:"Brunello di Montalcino, Chianti",n:"Jídlo a víno jsou hlavní důvod sem jet. Agroturistika s večeří pro celou skupinu, ochutnávky ve vinařstvích."}};
+LOC.forEach(l=>l.g=GASTRO[l.id]);
+
 /* ---------- state ---------- */
 const S={m:1,ap:"ALL",n:5,direct:false,hideKnown:false,sort:"idx",tab:"lokality",cmp:["costablanca","kypr","antalya"],metric:"idx",lcOff:{},tblSort:{k:"idx",dir:-1}};
 try{const s=JSON.parse(localStorage.getItem("zk27")||"{}");Object.assign(S,s)}catch(e){}
@@ -530,7 +556,7 @@ function renderControls(){
 function visible(){
   let L=LOC.filter(l=>!(S.hideKnown&&l.known)).filter(l=>!S.direct||bestFlight(l));
   const m=S.m,k={idx:l=>-idx(l,m),hi:l=>-l.hi[m],rain:l=>l.rain[m],sun:l=>-l.sun[m],flight:l=>(bestFlight(l)||flights(l)[0])[1].t,
-    price:l=>cost(l)[0],hills:l=>-hillScore(l)-l.hi[m]/100,name:l=>l.name}[S.sort];
+    price:l=>cost(l)[0],hills:l=>-hillScore(l)-l.hi[m]/100,food:l=>-l.g.s-l.g.p.length/10,name:l=>l.name}[S.sort];
   return L.sort((a,b)=>{const x=k(a),y=k(b);return typeof x==="string"?x.localeCompare(y,"cs"):x-y});
 }
 function renderPick(){
@@ -557,6 +583,7 @@ function renderGrid(){
         <dt>Let</dt><dd>${flightLines(l)}</dd>
         <dt>Cena</dt><dd><b>${fmtK(c[0])}–${fmtK(c[1])} Kč</b> / os. za ${S.n} nocí</dd>
         <dt>Terén</dt><dd><div class="terrain">${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></dd>
+        <dt>Jídlo</dt><dd>${bars(l.g.s)} <span class="price">${l.g.p}</span><div class="dish">${l.g.d.slice(0,3).join(" · ")}</div></dd>
       </dl>
       <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div>
         <div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
@@ -610,6 +637,8 @@ function renderCmp(){
     ["Silnice",l=>bars(l.sc[0]),best(l=>l.sc[0],1)],["Klid na silnicích",l=>bars(l.sc[1]),best(l=>l.sc[1],1)],
     ["Kopce",l=>bars(l.sc[2])+` <span style="font-size:12.5px;color:var(--muted)">${l.elev}</span>`,best(l=>l.sc[2],1)],
     ["Cyklo zázemí",l=>bars(l.sc[3]),best(l=>l.sc[3],1)],["Rozmanitost",l=>bars(l.sc[4]),best(l=>l.sc[4],1)],
+    ["Gastro",l=>bars(l.g.s)+` <span class="price">${l.g.p}</span><div style="font-size:13px;margin-top:4px">${l.g.n}</div>`,best(l=>l.g.s,1)],
+    ["Ochutnat",l=>`${l.g.d.join(", ")}<div style="font-size:12.5px;color:var(--muted);margin-top:3px">Pití: ${l.g.w}</div>`],
     ["Nejlepší měsíce",l=>l.best.map(i=>MS[i]).join(", ")],
     ["Výhody",l=>`<ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul>`],
     ["Nevýhody",l=>`<ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul>`]];
@@ -625,7 +654,8 @@ function renderTable(){
     ["sea","Moře °C",l=>l.sea[m]??-1,l=>METRICS.sea.fmt(l.sea[m])],
     ["fl","Let",l=>(bestFlight(l)||flights(l)[0])[1].t,l=>{const [k,f]=bestFlight(l)||flights(l)[0];return `${fmtH(f.t)} <span class="dir ${dirTxt(f.d)[1]}" title="${dirTxt(f.d)[0]}">${k}</span>`}],
     ["price","Cena od (Kč)",l=>cost(l)[0],l=>{const c=cost(l);return fmtK(c[0])+"–"+fmtK(c[1])}],
-    ["hills","Kopce",l=>l.sc[2],l=>bars(l.sc[2])],["roads","Silnice",l=>l.sc[0],l=>bars(l.sc[0])]];
+    ["hills","Kopce",l=>l.sc[2],l=>bars(l.sc[2])],["roads","Silnice",l=>l.sc[0],l=>bars(l.sc[0])],
+    ["food","Jídlo",l=>l.g.s,l=>bars(l.g.s)+` <span class="price">${l.g.p}</span>`]];
   const ts=S.tblSort,col=cols.find(c=>c[0]===ts.k)||cols[1];
   const L=visible().sort((a,b)=>{const x=col[2](a),y=col[2](b);return (typeof x==="string"?x.localeCompare(y,"cs"):x-y)*ts.dir});
   $("#tbl").innerHTML=`<thead><tr>${cols.map(c=>`<th data-sort="${c[0]}" class="${c[0]==="name"?"":"num"}" aria-sort="${c[0]===ts.k?(ts.dir>0?"ascending":"descending"):"none"}">${c[1]}</th>`).join("")}</tr></thead>
@@ -663,6 +693,10 @@ function openDetail(id){
         <p style="margin:0;font-size:13.5px;color:var(--muted)">Ubytování ${l.hotel[0]}–${l.hotel[1]} €/noc · karbonové silniční kolo ${l.bike[0]}–${l.bike[1]} €/den · auto/transfer ${l.car[0]}–${l.car[1]} €/os.</p></div>
     </div>
     <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div><div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
+    <div class="gastro"><div class="gs"><b>${l.g.s}/5</b><span class="price">${l.g.p}</span></div>
+      <div><div class="eyebrow">Gastro</div><p>${l.g.n}</p>
+        <div class="terrain" style="margin-top:8px">${l.g.d.map(d=>`<span class="chip">${d}</span>`).join("")}</div>
+        <p style="font-size:13.5px;color:var(--muted)">Pití: ${l.g.w}</p></div></div>
     <div class="links">
       <button class="btn ${inC?"":"pri"}" data-cmp="${l.id}" aria-pressed="${inC}">${inC?"✓ V porovnání":"+ Porovnat"}</button>
       <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Prague to "+l.name)}" target="_blank" rel="noopener">Lety z Prahy ↗</a>
