@@ -50,6 +50,8 @@ header.top{padding-block:28px 18px}
 .mapsec{padding-block:16px 18px}
 .tabbar{border-bottom:1px solid var(--line)}
 .tabbar .tabs{padding-block:4px 0}
+.tabwrap{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.sortctl{padding-block:6px 8px}
 .mapbox{position:relative;background:var(--sea);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
 .mapbox svg{display:block;width:100%;height:auto;max-height:560px}
 .mapbox .land{fill:var(--land);stroke:var(--coast);stroke-width:.6;stroke-linejoin:round}
@@ -307,12 +309,6 @@ footer p{max-width:90ch}
       <label class="toggle"><input type="checkbox" id="fKnown"> skrýt už navštívené</label>
     </div>
     <div class="ctl"><button class="btn sm" id="wOpen" type="button">Váhy indexu</button></div>
-    <div class="ctl"><label class="lbl" for="sortSel">Řadit</label>
-      <select id="sortSel">
-        <option value="tot">Celkový index</option><option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option>
-        <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší cesta</option><option value="price">Nejlevnější</option>
-        <option value="hills">Nejvíc kopců</option><option value="food">Nejlepší jídlo</option><option value="name">Abecedně</option>
-      </select></div>
   </div>
 </div>
 
@@ -328,12 +324,18 @@ footer p{max-width:90ch}
 </section>
 
 <div class="tabbar">
-  <div class="wrap"><nav class="tabs" role="tablist">
+  <div class="wrap tabwrap"><nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="lokality">Lokality</button>
     <button class="tab" role="tab" data-tab="pocasi">Počasí</button>
     <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
     <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
-  </nav></div>
+  </nav>
+  <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
+      <select id="sortSel">
+        <option value="tot">Celkový index</option><option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option>
+        <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší cesta</option><option value="price">Nejlevnější</option>
+        <option value="hills">Nejvíc kopců</option><option value="food">Nejlepší jídlo</option><option value="name">Abecedně</option>
+      </select></div></div>
 </div>
 
 <main class="wrap">
@@ -1163,6 +1165,7 @@ function renderControls(){
   $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
   ["lokality","pocasi","srovnani","tabulka"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
+  $("#sortCtl").hidden=S.tab==="srovnani"||S.tab==="tabulka";
   $("#cmpN").textContent=S.cmp.length;
 }
 function visible(){
