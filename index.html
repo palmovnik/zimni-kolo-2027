@@ -550,17 +550,17 @@ const hillScore=l=>l.sc[2];
 
 /* ---------- colors (explicit, readable with dark text in both themes) ---------- */
 function lerp(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t));}
-/* stupnice indexu: červená, oranžová, žlutá, zelená, modrá, fialová, černá; barva textu na podkladu ze stupnice: na tmavé fialové a černé bílá */
+/* stupnice indexu od nejhoršího: černá, fialová, červená, oranžová, žlutá, světle a sytě zelená; barva textu na podkladu ze stupnice: na tmavé fialové a černé bílá */
 function inkOn(c){const m=/rgb\((\d+),(\d+),(\d+)\)/.exec(c);if(!m)return "#17201c";return (.299*m[1]+.587*m[2]+.114*m[3])<120?"#fff":"#17201c";}
 function ramp(stops,t){t=clamp(t,0,1);const n=stops.length-1,i=Math.min(n-1,Math.floor(t*n));return `rgb(${lerp(stops[i],stops[i+1],t*n-i).join(",")})`;}
-const R={idx:[[232,96,82],[240,150,80],[246,205,90],[110,200,130],[70,150,215],[135,80,205],[28,20,40]],
+const R={idx:[[30,22,40],[120,70,170],[220,70,70],[240,150,80],[246,210,90],[160,210,110],[40,160,80]],
          temp:[[173,205,232],[214,232,214],[249,226,140],[246,170,110]],
          good:[[240,190,175],[246,225,150],[200,230,170],[130,205,150]],
          rain:[[245,240,225],[190,220,240],[120,170,225]],
          sun:[[215,215,215],[250,230,150],[250,190,90]],
          sea:[[175,205,235],[160,225,220],[150,225,190]]};
 const METRICS={
-  tot:{lbl:"Celkový index",get:(l,m)=>total(l,m),fmt:v=>v,col:v=>ramp(R.idx,(v-50)/34),leg:["horší","lepší"],r:R.idx},
+  tot:{lbl:"Celkový index",get:(l,m)=>total(l,m),fmt:v=>v,col:v=>ramp(R.idx,(v-45)/37),leg:["horší","lepší"],r:R.idx},
   idx:{lbl:"Index počasí",get:(l,m)=>idx(l,m),fmt:v=>v,col:v=>ramp(R.idx,(v-40)/55),leg:["horší","lepší"],r:R.idx},
   hi:{lbl:"Max °C",get:(l,m)=>l.hi[m],fmt:v=>v+"°",col:v=>ramp(R.temp,(v-10)/18),leg:["10 °C","28 °C"],r:R.temp},
   lo:{lbl:"Min °C",get:(l,m)=>l.lo[m],fmt:v=>v+"°",col:v=>ramp(R.temp,(v-1)/17),leg:["1 °C","18 °C"],r:R.temp},
