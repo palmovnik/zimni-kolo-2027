@@ -130,6 +130,9 @@ header.top{padding-block:28px 18px}
 .lang{display:inline-block;font:700 10px/1 var(--f-body);padding:3px 5px;border-radius:4px;background:var(--chip);color:var(--ink);margin-right:6px;letter-spacing:.06em}
 @media (max-width:640px){.rec{grid-template-columns:1fr}.rs{grid-column:1}}
 
+.wxleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:2px}
+.wxleg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -1301,10 +1304,17 @@ function renderTable(){
 function openDetail(id){
   const l=byId(id),m=S.m,c=cost(l),inC=S.cmp.includes(l.id);
   const q=encodeURIComponent(l.name+" cycling");
-  const spark=(()=>{const W=300,H=90,x=i=>20+i*65,y=v=>80-(v-0)*70/30;
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;height:auto"><polyline points="${l.hi.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-    <polyline points="${l.lo.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="var(--road)" stroke-width="1.5" stroke-dasharray="3 4"/>
-    ${l.hi.map((v,i)=>`<text x="${x(i)}" y="${y(v)-7}" text-anchor="middle" style="fill:var(--ink);font:600 12px var(--f-body)">${v}°</text><text x="${x(i)}" y="${H-1}" text-anchor="middle" style="fill:${i===m?"var(--accent)":"var(--muted)"};font:11px var(--f-body)">${MS[i]}</text>`).join("")}</svg>`})();
+  const spark=(()=>{const W=340,H=150,x=i=>34+i*68,lo=Math.min(...l.lo)-3,hi=Math.max(...l.hi)+4,y=v=>18+(hi-v)*(H-46)/(hi-lo);
+    const pts=a=>a.map((v,i)=>x(i)+","+y(v)).join(" "),lab=v=>String(Math.round(v))+"°";
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:380px;height:auto" role="img" aria-label="Průměrné maximum a minimum po měsících">
+    ${MS.map((_,i)=>`<rect x="${x(i)-26}" y="8" width="52" height="${H-30}" rx="6" fill="${i===m?"var(--accent)":"transparent"}" opacity=".08"/>`).join("")}
+    ${l.hi.map((v,i)=>`<line x1="${x(i)}" x2="${x(i)}" y1="${y(v)}" y2="${y(l.lo[i])}" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>`).join("")}
+    <polyline points="${pts(l.hi)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <polyline points="${pts(l.lo)}" fill="none" stroke="var(--road)" stroke-width="2.5"/>
+    ${l.hi.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--accent)"/><text x="${x(i)}" y="${y(v)-8}" text-anchor="middle" style="fill:var(--accent);font:700 13px var(--f-body)">${lab(v)}</text>`).join("")}
+    ${l.lo.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--road)"/><text x="${x(i)}" y="${y(v)+17}" text-anchor="middle" style="fill:var(--road);font:700 13px var(--f-body)">${lab(v)}</text>`).join("")}
+    ${MS.map((t,i)=>`<text x="${x(i)}" y="${H-2}" text-anchor="middle" style="fill:${i===m?"var(--accent)":"var(--muted)"};font:${i===m?"700 ":""}12px var(--f-body)">${t}</text>`).join("")}</svg>
+    <div class="wxleg"><span><i style="background:var(--accent)"></i>průměrné denní maximum</span><span><i style="background:var(--road)"></i>průměrné noční minimum</span></div>`})();
   $("#dlgBody").innerHTML=`<div class="gal">${l.rt.ph.slice(0,5).map((_,k)=>`<div class="ph" data-k="${k}"></div>`).join("")}</div>
   <div class="dbody">
     <div class="ctitle"><div><div class="eyebrow">${l.region}${l.known?" · už jsme byli":""}</div><h2>${l.name}</h2>
@@ -1312,8 +1322,10 @@ function openDetail(id){
     <div class="tip">${l.tip}</div>
     ${idxBreakdown(l)}
     <div class="two">
-      <div><div class="eyebrow" style="margin-bottom:6px">Teploty max / min po měsících</div>${spark}
+      <div><div class="eyebrow" style="margin-bottom:6px">Teploty po měsících (max přes den / min v noci)</div>${spark}
         <div class="scroll"><table class="climbs" style="margin-top:6px"><tr><td></td>${MS.map((x,i)=>`<td class="num" style="${i===m?"color:var(--accent);font-weight:600":""}">${x}</td>`).join("")}</tr>
+        <tr><td>Max °C</td>${l.hi.map(v=>`<td class="num" style="color:var(--accent);font-weight:600">${fmtS(v)}°</td>`).join("")}</tr>
+        <tr><td>Min °C</td>${l.lo.map(v=>`<td class="num" style="color:var(--road);font-weight:600">${fmtS(v)}°</td>`).join("")}</tr>
         <tr><td>Déšť (dny)</td>${l.rain.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Slunce (h)</td>${l.sun.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr></table></div>
