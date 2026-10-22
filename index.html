@@ -163,6 +163,11 @@ a.hol:hover{text-decoration:underline}
 .flinks{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;margin-top:3px}
 input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 6px;font:inherit;color:var(--ink)}
 
+.rprofile{padding:6px 20px 0}
+.rprofile:empty{display:none}
+svg.prof{width:100%;height:auto;display:block}
+svg.prof text{fill:var(--muted);font:11px var(--f-body)}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -425,7 +430,7 @@ footer p{max-width:90ch}
 <div class="itip" id="itip" hidden></div>
 <dialog id="rdlg"><button class="dlg-x" id="rdlgX" aria-label="Zavřít">×</button>
   <div class="rhead"><div class="eyebrow" id="rEyebrow"></div><h2 id="rTitle"></h2></div>
-  <div id="rmap"></div><div class="rmsg" id="rMsg"></div>
+  <div id="rmap"></div><div id="rProfile" class="rprofile"></div><div class="rmsg" id="rMsg"></div>
   <div class="rbar"><div class="rstat" id="rStat"></div><span class="sp"></span>
     <button class="btn pri" id="rGpx" disabled>Stáhnout GPX</button>
     <a class="btn" id="rBrouter" target="_blank" rel="noopener">Upravit v BRouter ↗</a>
@@ -824,17 +829,37 @@ async function routePts(r){const pts=[],names=[];
   for(const n of r[3]){const p=await geocode(n);if(p){pts.push(p);names.push(n)}}
   return {pts,names};}
 const brouterWeb=(l,pts)=>"https://brouter.de/brouter-web/#map=10/"+GEO[l.id][0]+"/"+GEO[l.id][1]+"/standard&lonlats="+pts.map(p=>p[1].toFixed(5)+","+p[0].toFixed(5)).join(";")+"&profile=fastbike";
+/* GeoJSON z BRouteru → stopa [lat, lon, výška] s délkou a převýšením */
+function toTrack(f,stat){return {coords:f.geometry.coordinates.map(c=>[+(+c[1]).toFixed(5),+(+c[0]).toFixed(5),Math.round(c[2]||0)]),
+  km:+(f.properties["track-length"]/1000).toFixed(1),up:+f.properties["filtered ascend"],real:true,stat:!!stat};}
 async function routeTrack(l,r,pts){
+  /* 1) předpočítaná trasa v repozitáři (routes/<lokalita>-<číslo>.geojson, viz tools/generate-routes.mjs) */
+  try{const res=await fetchT(`routes/${l.id}-${l.rt.r.indexOf(r)+1}.geojson`,6000);if(res.ok){const j=await res.json();if(j.features&&j.features[0])return toTrack(j.features[0],true)}}catch(e){}
   const key="zk27r2:"+l.id+":"+r[0];
   try{const c=JSON.parse(localStorage.getItem(key)||"null");if(c)return c}catch(e){}
   const res=await fetchT("https://brouter.de/brouter?profile=fastbike&alternativeidx=0&format=geojson&lonlats="+pts.map(p=>p[1].toFixed(5)+","+p[0].toFixed(5)).join("|"),25000);
   if(!res.ok) throw new Error("BRouter odpověděl chybou "+res.status);
-  const j=await res.json(),f=j.features[0];
-  const t={coords:f.geometry.coordinates.map(c=>[+c[1].toFixed(5),+c[0].toFixed(5),Math.round(c[2]||0)]),
-    km:+(f.properties["track-length"]/1000).toFixed(1),up:+f.properties["filtered ascend"],real:true};
+  const j=await res.json(),t=toTrack(j.features[0],false);
   try{localStorage.setItem(key,JSON.stringify(t))}catch(e){}
   return t;
 }
+/* Výškový profil trasy: vzdálenost × nadmořská výška */
+function profileSVG(t){const c=t.coords;if(c.length<2||!c.some(p=>p[2]))return "";
+  const R=6371,rad=x=>x*Math.PI/180,dist=[0];
+  for(let i=1;i<c.length;i++){const a=c[i-1],b=c[i],dl=rad(b[0]-a[0]),dn=rad(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(dn/2)**2;dist.push(dist[i-1]+2*R*Math.asin(Math.sqrt(h)))}
+  const tot=dist[dist.length-1],step=Math.max(1,Math.floor(c.length/400)),pts=[];for(let i=0;i<c.length;i+=step)pts.push([dist[i],c[i][2]]);pts.push([tot,c[c.length-1][2]]);
+  const W=900,H=150,pl=44,pr=10,pt=12,pb=24,lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1])),span=Math.max(100,hi-lo);
+  const x=d=>pl+d/tot*(W-pl-pr),y=e=>pt+(1-(e-lo)/span)*(H-pt-pb);
+  const line=pts.map(p=>x(p[0]).toFixed(1)+","+y(p[1]).toFixed(1)).join(" ");
+  const kmStep=tot>120?25:tot>60?10:5,ticks=[];for(let k=kmStep;k<tot;k+=kmStep)ticks.push(k);
+  const top=pts.reduce((a,p)=>p[1]>a[1]?p:a,pts[0]);
+  return `<svg viewBox="0 0 ${W} ${H}" class="prof" role="img" aria-label="Výškový profil trasy">
+    <line x1="${pl}" x2="${W-pr}" y1="${y(lo)}" y2="${y(lo)}" stroke="var(--line)"/>
+    ${ticks.map(k=>`<line x1="${x(k)}" x2="${x(k)}" y1="${pt}" y2="${H-pb}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${x(k)}" y="${H-6}" text-anchor="middle">${k} km</text>`).join("")}
+    <polygon points="${pl},${y(lo)} ${line} ${W-pr},${y(lo)}" fill="var(--accent)" opacity=".18"/>
+    <polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <text x="${pl-6}" y="${y(hi)+4}" text-anchor="end">${fmtN(hi)} m</text><text x="${pl-6}" y="${y(lo)+4}" text-anchor="end">${fmtN(lo)} m</text>
+    <circle cx="${x(top[0])}" cy="${y(top[1])}" r="3.5" fill="var(--accent)"/></svg>`;}
 function gpxText(l,r,t){
   const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;");
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -850,7 +875,7 @@ async function openRoute(id,i){
   $("#rEyebrow").textContent=l.name+" · "+l.region;$("#rTitle").textContent=r[0];
   $("#rStat").innerHTML=`<div><b>~${r[1]} km</b>odhad</div><div><b>~${fmtN(r[2])} m</b>převýšení</div>`;
   $("#rGoogle").href=gmaps(r[3]);$("#rBrouter").href="https://brouter.de/brouter-web/#map=10/"+GEO[l.id][0]+"/"+GEO[l.id][1]+"/standard&profile=fastbike";$("#rStat").dataset.x="";
-  $("#rGpx").disabled=true;msgEl.className="rmsg";msgEl.textContent="";
+  $("#rGpx").disabled=true;$("#rProfile").innerHTML="";msgEl.className="rmsg";msgEl.textContent="";
   if(!d.open)d.showModal();
   const msg=t=>{if(rcur&&rcur.r===r)msgEl.textContent=t};
   if(typeof L==="undefined"){msgEl.className="rmsg err";msgEl.textContent="Mapová knihovna se nenačetla. Mapa tras a GPX fungují na zveřejněné stránce (GitHub Pages); tady použij odkaz na Google Maps.";return;}
@@ -868,11 +893,11 @@ async function openRoute(id,i){
   rmap.fitBounds(L.latLngBounds(pts),{padding:[30,30]});
   msg("Počítám trasu po silnicích pro silniční kolo (BRouter)…");
   try{
-    const t=await routeTrack(l,r,pts);if(rcur.r!==r)return;rcur.t=t;
+    const t=await routeTrack(l,r,pts);if(rcur.r!==r)return;rcur.t=t;$("#rProfile").innerHTML=profileSVG(t);
     draft.remove();rlayer.addLayer(L.polyline(t.coords.map(c=>[c[0],c[1]]),{color:accent,weight:5,opacity:.9}));
     rmap.fitBounds(L.latLngBounds(t.coords.map(c=>[c[0],c[1]])),{padding:[24,24]});
     $("#rStat").innerHTML=`<div><b>${String(t.km).replace(".",",")} km</b>délka</div><div><b>${fmtN(t.up)} m</b>převýšení</div><div><b>${fmtN(Math.max(...t.coords.map(c=>c[2])))} m</b>nejvyšší bod</div>`;
-    $("#rGpx").disabled=false;msgEl.textContent="Trasa vede po silnicích z OpenStreetMap. Před jízdou ji projdi a případně uprav v BRouteru.";
+    $("#rGpx").disabled=false;msgEl.textContent=t.stat?"Předpočítaná trasa z repozitáře (OpenStreetMap, BRouter). Před jízdou ji projdi a případně uprav v BRouteru.":"Trasa vede po silnicích z OpenStreetMap. Před jízdou ji projdi a případně uprav v BRouteru.";
   }catch(e){if(rcur.r!==r)return;
     rcur.t={coords:pts.map(p=>[p[0],p[1],0]),real:false};$("#rGpx").disabled=false;msgEl.className="rmsg err";
     msgEl.textContent="Trasu po silnicích se nepodařilo spočítat ("+(e.name==="AbortError"?"BRouter neodpověděl včas":e.message||"chyba sítě")+"). Čárkovaně jsou jen body trasy. Plnou trasu i GPX získáš přes Upravit v BRouter.";}
