@@ -168,6 +168,16 @@ input[type=date]{background:var(--surface);border:1px solid var(--line);border-r
 svg.prof{width:100%;height:auto;display:block}
 svg.prof text{fill:var(--muted);font:11px var(--f-body)}
 
+.vgrp{border-top:1px solid var(--line);padding:10px 0}
+.vhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:6px}
+.vhead a{font:700 18px var(--f-display);text-transform:uppercase;cursor:pointer;color:var(--ink);text-decoration:none}
+.vgrp ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.vgrp li label{display:grid;grid-template-columns:auto 80px 1fr;gap:8px;align-items:baseline;font-size:14px;cursor:pointer}
+.vgrp li input{accent-color:var(--good)}
+.vgrp li.done span{color:var(--muted);text-decoration:line-through}
+.varea{font:600 11px/1.6 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-decoration:none!important}
+@media (max-width:640px){.vgrp li label{grid-template-columns:auto 1fr}.varea{grid-column:2}}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -379,6 +389,7 @@ footer p{max-width:90ch}
     <button class="tab" role="tab" data-tab="pocasi">Počasí</button>
     <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
     <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
+    <button class="tab" role="tab" data-tab="overeni">K ověření <span class="n" id="vN">0</span></button>
   </nav>
   <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
       <select id="sortSel">
@@ -407,6 +418,12 @@ footer p{max-width:90ch}
     </div>
   </section>
   <section id="v-srovnani" role="tabpanel" hidden><div id="cmpWrap"></div></section>
+  <section id="v-overeni" role="tabpanel" hidden>
+    <div class="panel"><h2>Co ještě ověřit</h2>
+      <p class="hint">Údaje, které nemají ověřený zdroj nebo jsou jen odhad. Kdo ze skupiny něco ověří (rezervační systém aerolinky, ceník půjčovny, nabídka hotelu), odškrtne to tady a pošle zjištění do skupiny; správce pak opraví <code>data.js</code>. Odškrtnutí se ukládá jen v tvém prohlížeči.</p>
+      <div class="ctl" style="margin:0 0 12px"><label class="toggle"><input type="checkbox" id="vHide"> skrýt odškrtnuté</label><label class="toggle"><input type="checkbox" id="vNew"> jen nové lokality</label></div>
+      <div id="vList"></div></div>
+  </section>
   <section id="v-tabulka" role="tabpanel" hidden>
     <div class="panel"><h2>Všechny lokality</h2><p class="hint" id="tblHint"></p>
     <div class="scroll"><table class="tbl" id="tbl"></table></div></div>
@@ -596,7 +613,7 @@ function renderControls(){
   $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;$("#sortSel").value=S.sort;
   $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
-  ["lokality","pocasi","srovnani","tabulka"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
+  ["lokality","pocasi","srovnani","tabulka","overeni"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
   $("#sortCtl").hidden=S.tab==="srovnani"||S.tab==="tabulka";
   $("#cmpN").textContent=S.cmp.length;
 }
@@ -1005,9 +1022,31 @@ function renderPlan(){const [a,b]=tripDates(),hs=holidaysIn(a,b);
 $("#dDate").addEventListener("change",e=>{const v=e.target.value;if(v&&v>="2027-01-01"&&v<="2027-05-31"){S.date=v;S.m=Dt(v).getMonth()}else S.date=null;render();});
 $("#dClear").addEventListener("click",()=>{S.date=null;render();});
 
+/* ---------- seznam k ověření ---------- */
+let VDONE={};try{VDONE=JSON.parse(localStorage.getItem("zk27v")||"{}")}catch(e){}
+function verifyItems(){const out=[],add=(l,area,what,k)=>out.push({l,area,what,k:l.id+":"+k});
+  LOC.forEach(l=>{
+    APS.forEach(ap=>{const f=l.f[ap];if(f.d==="s")add(l,"Lety",`${APN[ap]}: ${f.a}`,"f"+ap);
+      else if(f.d===true&&!f.src.length)add(l,"Lety",`${APN[ap]}: přímý let bez zdroje pro 2026/27 (${f.a})`,"f"+ap);});
+    if(l.cl.est)add(l,"Počasí",`Klimatické normály (${l.cl.st}) nejsou v průzkumu ověřené`,"cl");
+    if(/odhad/i.test(l.cs.hotel)||!l.cs.src.length)add(l,"Ceny",`Ubytování ${l.hotel[0]}–${l.hotel[1]} €/noc, kolo ${l.bike[0]}–${l.bike[1]} €/den: ${l.cs.hotel}`,"cs");
+    if(!GASTRO[l.id].src.length)add(l,"Gastro",`Hodnocení jídla ${fmtS(GASTRO[l.id].s)}/5 je odhad bez zdroje`,"g");
+    l.climbs.forEach((c,i)=>{if(!SRC[c[4]])add(l,"Stoupání",`${c[0]}: bez zdroje`,"c"+i)});
+    add(l,"Trasy","Délky a převýšení základních tras jsou odhad, ověřit v mapě trasy","rt");});
+  return out;}
+function renderVerify(){const hide=$("#vHide").checked,onlyNew=$("#vNew").checked;
+  const items=verifyItems().filter(v=>!(hide&&VDONE[v.k])&&!(onlyNew&&v.l.known));
+  const by={};items.forEach(v=>(by[v.l.id]=by[v.l.id]||[]).push(v));
+  $("#vList").innerHTML=Object.values(by).map(arr=>{const l=arr[0].l,done=arr.filter(v=>VDONE[v.k]).length;
+    return `<div class="vgrp"><div class="vhead"><a data-open="${l.id}">${l.name}</a><span class="muted">${done}/${arr.length} ověřeno</span></div>
+      <ul>${arr.map(v=>`<li class="${VDONE[v.k]?"done":""}"><label><input type="checkbox" data-vk="${v.k}" ${VDONE[v.k]?"checked":""}><span class="varea">${v.area}</span><span>${v.what}</span></label></li>`).join("")}</ul></div>`}).join("")||`<p class="muted">Vše ověřeno.</p>`;}
+document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.dataset.vk;if(k){if(e.target.checked)VDONE[k]=1;else delete VDONE[k];
+  try{localStorage.setItem("zk27v",JSON.stringify(VDONE))}catch(err){}render()}
+  if(e.target.id==="vHide"||e.target.id==="vNew")renderVerify();});
+
 /* ---------- wiring ---------- */
 function render(){renderControls();renderPlan();renderPick();renderMap();
-  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else renderTable();save();}
+  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
 function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
 document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");if(!t)return;
   if(t.dataset.m!==undefined){S.m=+t.dataset.m;if(S.date&&Dt(S.date).getMonth()!==S.m)S.date=null;render()}
@@ -1026,7 +1065,7 @@ $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()})
 $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
 $("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
-const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka"].includes(h))S.tab=h;
+const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni"].includes(h))S.tab=h;
 render();
 try{const ms=$("#mapscroll");if(ms.scrollWidth>ms.clientWidth)ms.scrollLeft=(ms.scrollWidth-ms.clientWidth)*.2}catch(e){}
 </script>
