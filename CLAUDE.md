@@ -72,11 +72,11 @@ Web běží na GitHub Pages: https://palmovnik.github.io/zimni-kolo-2027/
 
 ## Spolupráce
 
-- Do `main` se nepushuje přímo. Každá změna jde přes vlastní větev a pull request. `main` se hned
-  nasazuje na GitHub Pages.
-- Jeden PR = jedna věc (např. „oprava letů Kypr“, „nová lokalita Sardinie“). Do popisu PR uveď,
-  které údaje se změnily a odkud jsou nové zdroje.
+- Pull requesty neděláme. Změny se commitují a pushují rovnou do `main`, který se hned nasazuje
+  na GitHub Pages. Proto před pushem vždy proveď ověření z předchozí sekce.
+- Před začátkem práce si stáhni aktuální `main` (`git pull`), ať nepřepíšeš změny ostatních.
 - Commity česky, v rozkazovacím způsobu („Přidat Fuerteventuru“, „Opravit ceny Mallorky“).
+  Jeden commit = jedna věc; u změn dat napiš do zprávy, odkud jsou nové zdroje.
 - Při konfliktu v `index.html` (jeden soubor = časté konflikty) přednostně slučuj datové bloky
   po celých lokalitách.
 - Nesahat do `research_notes/` cizích rešerší; novou rešerši ukládej do nové složky.
