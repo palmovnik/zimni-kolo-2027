@@ -139,6 +139,16 @@ sup.cit{font:600 10px/1 var(--f-body);color:var(--muted);margin-left:2px;vertica
 .srclist li{break-inside:avoid;margin-bottom:3px}
 .srclist a{color:var(--muted)}
 
+.airports{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:4px 18px}
+.route{border-bottom:1px solid var(--line);padding-bottom:6px}
+.route .route-row{border-bottom:0}
+.rclimbs{list-style:none;margin:0 0 4px;padding:0 0 0 14px;display:grid;gap:3px;font-size:13.5px}
+.rclimbs li{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--ink)}
+.rclimbs li::before{content:"";position:absolute}
+.rclimbs li span:first-child{padding-left:12px;position:relative}
+.rclimbs li span:first-child::before{content:"▲";position:absolute;left:0;font-size:8px;top:5px;color:var(--accent)}
+.rclimbs .cn{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
 /* Route dialog */
 #rdlg{max-width:min(980px,calc(100vw - 24px))}
 .rhead{padding:16px 56px 10px 20px}
@@ -1342,14 +1352,6 @@ function openDetail(id){
         <tr><td>Slunce (h)</td>${l.sun.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr></table></div>
         <p class="srcline">Stanice: ${l.cl.st}${l.cl.est?" · hodnoty jsou orientační normály, v tomto průzkumu neověřené":""}${cite(l.cl.src)}</p></div>
-      <div><div class="eyebrow" style="margin-bottom:6px">Klasická stoupání · ${l.elev}</div>
-        <table class="climbs">${l.climbs.map(c=>`<tr><td>${c[0]}${cite([c[4]])}</td><td class="num">${c[1]}</td><td class="num">${c[2]}</td><td class="num">${c[3]}</td></tr>`).join("")}</table>
-        <p class="srcline">Denní převýšení ${l.elev} je odhad.</p></div>
-    </div>
-    <div class="two">
-      <div><div class="eyebrow" style="margin-bottom:6px">Doprava</div>
-        ${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}${f.src.length?"":" · neověřeno"}.${cite(f.src)}</span></p>`}).join("")}
-        <p style="margin:0"><b>Transfer:</b> ${l.transfer}</p></div>
       <div><div class="eyebrow" style="margin-bottom:6px">Odhad ceny na osobu · ${S.n} nocí · ${S.ap==="ALL"?"levnější letiště":S.ap}</div>
         <p style="margin:0 0 6px;font:700 28px var(--f-display)">${fmtK(c[0])} – ${fmtK(c[1])} Kč</p>
         ${(()=>{const p=costParts(l),k=v=>fmtK(v*EUR);return `<table class="climbs">
@@ -1360,10 +1362,11 @@ function openDetail(id){
           <tr><td>Jídlo a pití ${l.food[0]}–${l.food[1]} €/den</td><td class="num">${k(p.food[0])}–${k(p.food[1])}</td></tr></table>`})()}
         <p class="srcline">${l.cs.hotel}.${cite(l.cs.src)}</p></div>
     </div>
+    <div><div class="eyebrow" style="margin-bottom:6px">Doprava</div>
+      <div class="airports">${APS.map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 10px"><b>${APN[k]}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a}. Letenka pro skupinu ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč (odhad)${f.od?`; nejnižší nalezená cena ${f.od}`:""}${f.src.length?"":" · neověřeno"}.${cite(f.src)}</span></p>`}).join("")}</div>
+      <p style="margin:0"><b>Transfer:</b> ${l.transfer}</p></div>
     <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div><div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
-    <div><div class="eyebrow" style="margin-bottom:4px">Základní trasy · mapa OpenStreetMap a GPX ke stažení</div>
-      <div class="routes">${l.rt.r.map(r=>`<div class="route-row"><b>${r[0]}</b><span>${r[1]} km</span><span>${fmtN(r[2])} m</span><button class="btn sm pri" data-route="${l.id}:${l.rt.r.indexOf(r)}">Mapa + GPX</button></div>`).join("")}</div>
-      <p style="margin:6px 0 0;font-size:13px;color:var(--muted)">Délky a převýšení jsou přibližné. Trasy si před jízdou upravte a uložte do Komootu nebo Garminu.</p></div>
+    ${routesHTML(l)}
     <div class="gastro"><div class="gs"><b>${fmtS(l.g.s)}/5</b><span class="price">${l.g.p}</span></div>
       <div><div class="eyebrow">Gastro</div><p>${l.g.n}${cite(l.g.src)}</p>
         <div class="terrain" style="margin-top:8px">${l.g.d.map(d=>`<span class="chip">${d}</span>`).join("")}</div>
@@ -1555,6 +1558,19 @@ function itipHTML(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+
     <span class="bar"><i style="width:${p[F.k].v}%"></i></span><small>${p[F.k].x}</small></div>`).join("")}
   <div class="foot">Index = vážený průměr skóre. <button data-wopen="1">Upravit váhy</button></div>`;}
 /* Rozpad indexu přímo v detailu lokality: skóre, váha a body, které kritérium přidává */
+/* Trasy a stoupání dohromady: stoupání se přiřadí k trase, jejíž název nebo body obsahují klíčové slovo stoupání */
+const CLIMB_STOP=new Set(["stoupani","silnice","okruh","cely","prehled","variant","varianta","lehci","cil","vrchol","pres","prejezd","plosina","okruhy","vnitrozemim","tour","haute","route","route)"]);
+function routesHTML(l){
+  const rts=l.rt.r.map((r,i)=>({r,i,nm:norm(r[0]),wp:norm(r[3].join(" ")),cl:[]})),rest=[];
+  l.climbs.forEach(c=>{const kws=c[0].split(/[\s(),–\-\/]+/).map(norm).filter(w=>w.length>=4&&!CLIMB_STOP.has(w)).map(w=>w.slice(0,Math.min(w.length,6)));
+    let hit=null,best=0;rts.forEach(t=>{const sc=kws.reduce((a,w)=>a+(t.nm.includes(w)?2:t.wp.includes(w)?1:0),0);if(sc>best){best=sc;hit=t}});
+    (hit?hit.cl:rest).push(c);});
+  const cl=c=>`<li><span>${c[0]}${cite([c[4]])}</span><span class="cn">${[c[1],c[2],c[3]].filter(v=>v&&v!=="—").join(" · ")}</span></li>`;
+  return `<div><div class="eyebrow" style="margin-bottom:4px">Trasy a stoupání · mapa OpenStreetMap a GPX ke stažení</div>
+    <div class="routes">${rts.map(t=>`<div class="route"><div class="route-row"><b>${t.r[0]}</b><span>~${t.r[1]} km</span><span>~${fmtN(t.r[2])} m</span><button class="btn sm pri" data-route="${l.id}:${t.i}">Mapa + GPX</button></div>
+      ${t.cl.length?`<ul class="rclimbs">${t.cl.map(cl).join("")}</ul>`:""}</div>`).join("")}</div>
+    ${rest.length?`<div class="eyebrow" style="margin:12px 0 4px">Další stoupání v okolí</div><ul class="rclimbs">${rest.map(cl).join("")}</ul>`:""}
+    <p class="srcline">Délky a převýšení tras jsou odhad, přesná čísla spočítá mapa trasy. Údaje u stoupání jsou ze zdrojů. Denní převýšení ${l.elev} je odhad.</p></div>`;}
 const REC_KIND={tip:["Doporučení","good"],pozor:["Pozor","bad"],zazitek:["Zkušenost","road"]};
 function recHTML(l){const r=REC[l.id]||[];if(!r.length)return "";
   return `<div><div class="eyebrow" style="margin-bottom:6px">Co říkají cyklistické weby a jezdci · ${r.length} ${r.length<5?"postřehy":"postřehů"}</div>
