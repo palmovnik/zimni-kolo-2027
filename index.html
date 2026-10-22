@@ -322,6 +322,22 @@ svg.lc .grid line{stroke:var(--line)}
 .cmp .head small{display:block;font:400 12px var(--f-body);text-transform:none;color:var(--muted);margin-top:4px}
 .cmp .win{background:color-mix(in srgb,var(--good) 14%,transparent)}
 .cmp ul{margin:0;padding-left:16px}
+/* hlasování */
+.vtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
+.vtop input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit;color:var(--ink);width:170px;max-width:100%}
+.vnote{background:var(--surface-2);border-radius:8px;padding:10px 12px;margin:0 0 12px;font-size:13.5px}
+.vstate{font-size:13.5px;color:var(--muted);margin:0 0 6px}.vstate b{color:var(--ink)}
+.vrow{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.vrow .rk{font:700 18px/1 var(--f-display);color:var(--muted);text-align:right}
+.vrow .nm a{font-weight:600;cursor:pointer}.vrow .nm small{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.vbar{height:5px;border-radius:3px;background:var(--good);margin-top:4px;max-width:100%}
+.vt{font-size:13px;white-space:nowrap;text-align:right}.vt b{font:700 18px/1 var(--f-display);display:block}.vt .p{color:var(--good)}.vt .m{color:var(--bad)}
+.vbtns{display:flex;gap:4px}
+.vbtn{width:38px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 18px/1 var(--f-body);cursor:pointer}
+.vbtn.p[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--surface)}
+.vbtn.m[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.vbtn:disabled{opacity:.3;cursor:not-allowed}
+.vwho{margin-top:14px;font-size:13.5px}.vwho li{margin:3px 0}.vwho .p{color:var(--good)}.vwho .m{color:var(--bad)}
 .empty{padding:30px;text-align:center;color:var(--muted);background:var(--surface);border-radius:12px;border:1px dashed var(--line)}
 .bars{display:inline-flex;vertical-align:middle;gap:2px;align-items:center}
 .bars i{display:block;width:14px;height:6px;border-radius:2px;background:var(--line)}
@@ -409,6 +425,7 @@ footer p{max-width:90ch}
     <button class="tab" role="tab" data-tab="pocasi">Počasí</button>
     <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
     <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
+    <button class="tab" role="tab" data-tab="hlasovani">Hlasování <span class="n" id="voteN">0</span></button>
     <button class="tab" role="tab" data-tab="overeni">K ověření <span class="n" id="vN">0</span></button>
   </nav>
   <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
@@ -443,6 +460,11 @@ footer p{max-width:90ch}
       <p class="hint">Údaje, které nemají ověřený zdroj nebo jsou jen odhad. Kdo ze skupiny něco ověří (rezervační systém aerolinky, ceník půjčovny, nabídka hotelu), odškrtne to tady a pošle zjištění do skupiny; správce pak opraví <code>data.js</code>. Odškrtnutí se ukládá jen v tvém prohlížeči.</p>
       <div class="ctl" style="margin:0 0 12px"><label class="toggle"><input type="checkbox" id="vHide"> skrýt odškrtnuté</label><label class="toggle"><input type="checkbox" id="vNew"> jen nové lokality</label></div>
       <div id="vList"></div></div>
+  </section>
+  <section id="v-hlasovani" role="tabpanel" hidden>
+    <div class="panel"><h2>Hlasování</h2>
+      <p class="hint">Hlasuje se metodou D21 (Janečkova metoda). Každý má 3 kladné hlasy a 1 záporný; záporný jde použít až po rozdání aspoň 2 kladných. Jedné lokalitě dáš nejvýš jeden hlas. Pořadí určuje součet: kladné minus záporné. Hlasy jsou společné pro celou skupinu, svůj hlas můžeš kdykoli změnit.</p>
+      <div id="voteWrap"></div></div>
   </section>
   <section id="v-tabulka" role="tabpanel" hidden>
     <div class="panel"><h2>Všechny lokality</h2><p class="hint" id="tblHint"></p>
@@ -642,7 +664,7 @@ function renderControls(){
   $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;$("#sortSel").value=S.sort;
   $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
-  ["lokality","pocasi","srovnani","tabulka","overeni"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
+  ["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
   $("#sortCtl").hidden=S.tab==="srovnani"||S.tab==="tabulka";
   $("#cmpN").textContent=S.cmp.length;
 }
@@ -1092,9 +1114,67 @@ document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.datase
   try{localStorage.setItem("zk27v",JSON.stringify(VDONE))}catch(err){}render()}
   if(e.target.id==="vHide"||e.target.id==="vNew")renderVerify();});
 
+/* ---------- hlasování: D21 (Janečkova metoda), hlasy se ukládají do Supabase ---------- */
+/* Supabase: Project URL a veřejný klíč (anon / publishable). Bez nich se hlasování jen zobrazí bez ukládání. Nastavení viz CLAUDE.md. */
+const VOTE_CFG={url:"",key:""};
+const VPLUS=3,VMIN=1,VMIN_AFTER=2;
+const V={all:[],me:{plus:[],minus:[]},name:"",msg:"",err:false,dirty:false,busy:false};
+try{V.name=localStorage.getItem("zk27n")||""}catch(e){}
+const vOn=()=>!!(VOTE_CFG.url&&VOTE_CFG.key),vid=n=>n.trim().toLowerCase().replace(/\s+/g," ");
+const escH=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const vH=()=>({apikey:VOTE_CFG.key,Authorization:"Bearer "+VOTE_CFG.key,"Content-Type":"application/json"});
+const vClean=a=>(Array.isArray(a)?a:[]).filter(id=>byId(id));
+function vMine(){const r=V.all.find(x=>x.id===vid(V.name));V.me=r?{plus:vClean(r.plus).slice(0,VPLUS),minus:vClean(r.minus).slice(0,VMIN)}:{plus:[],minus:[]};V.dirty=false;}
+async function vLoad(){if(!vOn())return;
+  try{const r=await fetch(VOTE_CFG.url+"/rest/v1/votes?select=id,name,plus,minus,updated_at&order=updated_at",{headers:vH()});
+    if(!r.ok)throw new Error("HTTP "+r.status);V.all=await r.json();if(!V.dirty)vMine();}
+  catch(e){V.msg="Hlasy se nepodařilo načíst ("+e.message+").";V.err=true;}
+  $("#voteN").textContent=V.all.length;if(S.tab==="hlasovani")renderVote();}
+async function vSave(del){const name=V.name.trim();if(!name){V.msg="Nejdřív napiš své jméno.";V.err=true;renderVote();return;}
+  V.busy=true;renderVote();
+  try{const id=vid(name),r=del?await fetch(VOTE_CFG.url+"/rest/v1/votes?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:vH()})
+      :await fetch(VOTE_CFG.url+"/rest/v1/votes",{method:"POST",headers:{...vH(),Prefer:"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify({id,name,plus:V.me.plus,minus:V.me.minus,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error("HTTP "+r.status);V.dirty=false;V.msg=del?"Tvůj hlas je smazaný.":"Hlas uložen.";V.err=false;await vLoad();}
+  catch(e){V.msg="Uložení se nepovedlo ("+e.message+"). Zkus to znovu.";V.err=true;}
+  V.busy=false;renderVote();}
+function vToggle(id,kind){const me=V.me,P=me.plus,M=me.minus;
+  if(kind==="p"){if(P.includes(id))P.splice(P.indexOf(id),1);else if(P.length<VPLUS){P.push(id);if(M.includes(id))M.length=0;}}
+  else{if(M.includes(id))M.length=0;else if(P.filter(x=>x!==id).length>=VMIN_AFTER){if(P.includes(id))P.splice(P.indexOf(id),1);M.length=0;M.push(id);}}
+  if(P.length<VMIN_AFTER)M.length=0;V.dirty=true;V.msg="";renderVote();}
+function renderVote(){const m=S.m,me=V.me,P=me.plus,M=me.minus,on=vOn();
+  const T={};LOC.forEach(l=>T[l.id]={p:[],m:[]});
+  V.all.forEach(r=>{vClean(r.plus).slice(0,VPLUS).forEach(id=>T[id].p.push(r.name));vClean(r.minus).slice(0,VMIN).forEach(id=>T[id].m.push(r.name));});
+  const sc=id=>T[id].p.length-T[id].m.length;
+  const L=LOC.filter(l=>!(S.hideKnown&&l.known)).sort((a,b)=>sc(b.id)-sc(a.id)||T[b.id].p.length-T[a.id].p.length||total(b,m)-total(a,m));
+  const max=Math.max(1,...L.map(l=>sc(l.id)));let rank=0,prev=null;
+  const rows=L.map((l,i)=>{const v=sc(l.id);if(v!==prev){rank=i+1;prev=v}const t=T[l.id],inP=P.includes(l.id),inM=M.includes(l.id);
+    const who=[t.p.length?"+ "+t.p.map(escH).join(", "):"",t.m.length?"− "+t.m.map(escH).join(", "):""].filter(Boolean).join(" · ");
+    return `<div class="vrow"><span class="rk">${V.all.length?rank+".":""}</span>
+      <div class="nm"><a data-open="${l.id}">${l.name}</a> <span style="color:var(--muted);font-size:12.5px">· index ${total(l,m)}</span>${who?`<small>${who}</small>`:""}${v>0?`<div class="vbar" style="width:${Math.round(v/max*100)}%"></div>`:""}</div>
+      <div class="vt"><b>${v>0?"+"+v:v<0?"−"+(-v):"0"}</b><span class="p">+${t.p.length}</span> <span class="m">−${t.m.length}</span></div>
+      <div class="vbtns"><button class="vbtn p" data-v="p:${l.id}" aria-pressed="${inP}" aria-label="Kladný hlas pro ${l.name}" ${!inP&&P.length>=VPLUS?"disabled":""}>+</button>
+        <button class="vbtn m" data-v="m:${l.id}" aria-pressed="${inM}" aria-label="Záporný hlas pro ${l.name}" ${!inM&&P.filter(x=>x!==l.id).length<VMIN_AFTER?"disabled":""}>−</button></div></div>`}).join("");
+  const minTxt=M.length?`záporný: <b>${byId(M[0]).name}</b>`:P.length<VMIN_AFTER?`záporný odemkneš po ${VMIN_AFTER} kladných`:"záporný: <b>nepoužitý</b>";
+  $("#voteWrap").innerHTML=`${on?"":`<p class="vnote">Hlasování zatím není propojené s databází, hlasy se neuloží. Správce webu doplní adresu a klíč Supabase do <code>VOTE_CFG</code> v <code>index.html</code>.</p>`}
+    <div class="vtop"><label class="lbl" for="vName">Tvoje jméno</label><input id="vName" maxlength="40" autocomplete="nickname" value="${escH(V.name)}" placeholder="např. Honza">
+      <button class="btn pri" id="vSave" ${!on||V.busy?"disabled":""}>${V.busy?"Ukládám…":"Uložit hlas"}</button>
+      ${on&&V.all.some(x=>x.id===vid(V.name))?`<button class="btn sm" id="vDel" ${V.busy?"disabled":""}>Smazat můj hlas</button>`:""}
+      ${on?`<button class="btn sm" id="vReload" ${V.busy?"disabled":""}>Obnovit</button>`:""}</div>
+    <p class="vstate">Kladné: <b>${P.length} z ${VPLUS}</b> · ${minTxt}${V.dirty?' · <b style="color:var(--warn)">neuloženo</b>':""}${V.msg?` · <span style="color:var(--${V.err?"bad":"good"})">${escH(V.msg)}</span>`:""}</p>
+    <div>${rows}</div>
+    <div class="vwho"><div class="eyebrow" style="margin-bottom:4px">Hlasovalo ${V.all.length} ${V.all.length===1?"člověk":V.all.length>=2&&V.all.length<=4?"lidé":"lidí"}</div>
+      <ul style="margin:0;padding-left:18px">${V.all.map(r=>`<li><b>${escH(r.name)}</b>: ${vClean(r.plus).map(id=>`<span class="p">+${byId(id).name}</span>`).join(", ")}${vClean(r.minus).length?", "+vClean(r.minus).map(id=>`<span class="m">−${byId(id).name}</span>`).join(", "):""}</li>`).join("")}</ul></div>`;}
+$("#voteWrap").addEventListener("click",e=>{const b=e.target.closest("[data-v]");
+  if(b){const [k,id]=b.dataset.v.split(":");vToggle(id,k);return}
+  if(e.target.id==="vSave")vSave(false);else if(e.target.id==="vDel"){if(confirm("Opravdu smazat tvůj hlas?"))vSave(true)}else if(e.target.id==="vReload"){V.msg="";V.err=false;vLoad()}});
+$("#voteWrap").addEventListener("change",e=>{if(e.target.id!=="vName")return;V.name=e.target.value.trim();try{localStorage.setItem("zk27n",V.name)}catch(err){}
+  if(!V.dirty)vMine();V.msg="";renderVote();});
+vLoad();
+
 /* ---------- wiring ---------- */
 function render(){renderControls();renderPlan();renderPick();renderMap();
-  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
+  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else if(S.tab==="hlasovani")renderVote();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
 function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
 document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");if(!t)return;
   if(t.dataset.m!==undefined){S.m=+t.dataset.m;if(S.date&&Dt(S.date).getMonth()!==S.m)S.date=null;render()}
@@ -1113,8 +1193,8 @@ $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()})
 $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
 $("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
-const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni"].includes(h))S.tab=h;
-addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].includes(h))S.tab=h;
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 render();
 try{const ms=$("#mapscroll");if(ms.scrollWidth>ms.clientWidth)ms.scrollLeft=(ms.scrollWidth-ms.clientWidth)*.2}catch(e){}
 </script>

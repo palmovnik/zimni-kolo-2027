@@ -51,6 +51,27 @@ V `index.html`:
 - `FACTORS`, `W0`, `PRESETS`: kritéria celkového indexu, výchozí váhy a předvolby.
 - `parts()`, `total()`, `idx()`, `cost()`, `costParts()`, `travel()`: výpočty indexu, ceny a času.
 
+## Hlasování (záložka Hlasování)
+
+- Metoda D21: 3 kladné hlasy a 1 záporný na osobu, záporný až po 2 kladných, jedné lokalitě nejvýš
+  jeden hlas. Konstanty `VPLUS`, `VMIN`, `VMIN_AFTER` v `index.html`.
+- Hlasy jsou v Supabase (tabulka `votes`), stránka je čte a zapisuje přes REST s veřejným klíčem
+  v `VOTE_CFG` (`url` = Project URL, `key` = anon / publishable klíč). Tajný (service_role) klíč do
+  repozitáře nikdy nedávat. Bez `VOTE_CFG` se záložka zobrazí, ale nic neukládá.
+- Přihlášení není: hlas patří jménu (bez ohledu na velikost písmen). Kdokoli s odkazem může hlasovat
+  nebo přepsat cizí hlas; pro skupinu přátel to stačí.
+- Založení tabulky (Supabase → SQL Editor):
+
+  ```sql
+  create table votes (id text primary key, name text not null, plus text[] not null default '{}',
+    minus text[] not null default '{}', updated_at timestamptz not null default now());
+  alter table votes enable row level security;
+  create policy "cist" on votes for select to anon using (true);
+  create policy "pridat" on votes for insert to anon with check (cardinality(plus) <= 3 and cardinality(minus) <= 1);
+  create policy "zmenit" on votes for update to anon using (true) with check (cardinality(plus) <= 3 and cardinality(minus) <= 1);
+  create policy "smazat" on votes for delete to anon using (true);
+  ```
+
 ## Pravidla pro data (nejdůležitější)
 
 1. Každý faktický údaj má zdroj v `SRC`, nebo je výslovně označený jako odhad (`cl.est`, text
