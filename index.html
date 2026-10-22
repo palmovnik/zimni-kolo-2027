@@ -248,7 +248,7 @@ main{padding-block:20px 60px}
 .idx{flex:none;text-align:center;min-width:52px;padding:5px 6px;border-radius:8px;font-family:var(--f-display);color:#17201c}
 .idx b{display:block;font-size:22px;line-height:1}
 .idx small{font:600 9px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.06em}
-.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface-2);border-radius:8px;padding:8px}
+.wx{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:var(--surface-2);border-radius:8px;padding:8px}
 .wx div{text-align:center;min-width:0}
 .wx b{display:block;font:600 19px/1.1 var(--f-display)}
 .wx small{font-size:11px;color:var(--muted)}
@@ -413,7 +413,7 @@ footer p{max-width:90ch}
   </nav>
   <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
       <select id="sortSel">
-        <option value="tot">Celkový index</option><option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option>
+        <option value="tot">Celkový index</option><option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option><option value="wind">Nejméně větru</option>
         <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší cesta</option><option value="price">Nejlevnější</option>
         <option value="hills">Nejvíc kopců</option><option value="food">Nejlepší jídlo</option><option value="name">Abecedně</option>
       </select></div></div>
@@ -453,13 +453,13 @@ footer p{max-width:90ch}
 <footer class="wrap">
   <p><b>Odkud jsou čísla.</b> U každé lokality najdeš v detailu zdroje k počasí, letům, cenám, stoupáním a gastru. Co zdroj nemá, je výslovně označené jako odhad. Ověřování proběhlo v říjnu 2026; řada webů byla dostupná jen přes výsledky vyhledávání, takže před rezervací vše zkontroluj u aerolinky, půjčovny a hotelu.</p>
   <p><b>Počasí:</b> dlouhodobé měsíční normály nejbližší meteostanice (stanice je uvedena u lokality). <b>Lety:</b> „přímý“ = linka potvrzená pro zimu 2026/27 nebo letní řád 2027; „jen sezónně / neověřeno“ = linka létá jen část roku, nebo její zimní provoz nemáme potvrzený. Letenka je odhad zpáteční ceny na osobu s kabinovým zavazadlem pro skupinu 6 lidí při rezervaci 6–10 týdnů dopředu; „nejnižší nalezená cena“ je akční cena ze zdroje. Zimní řád končí 27. 3. 2027, Velikonoce jsou 28. 3. 2027.</p>
-  <p><b>Cena na osobu</b> = letenka z nejlevnějšího zvoleného letiště + ubytování (sdílený pokoj nebo vila pro 6) × noci + karbonové silniční kolo × noci + transfer / auto + jídlo a pití × noci (večeře podle Numbeo, oběd a kafe 15–20 €/den). Kurz 24,5 Kč/€. <b>Čas na cestě</b> = let + transfer z letiště na základnu jedním směrem. <b>Bratislava</b> je asi hodinu od Vídně a Ryanair z ní v zimě létá do Alicante, Málagy, Pafu, Barcelony, Palerma a na Lanzarote.</p>
+  <p><b>Cena na osobu</b> = letenka z nejlevnějšího zvoleného letiště + ubytování (sdílený pokoj nebo vila pro 6) × noci + karbonové silniční kolo × noci + transfer / auto + jídlo a pití × noci (večeře podle Numbeo, oběd a kafe 15–20 €/den). Kurz 24,5 Kč/€. <b>Vítr</b> = průměrná rychlost větru 10 m nad zemí mezi 9 a 17 h a počet dní s denním průměrem aspoň 25 km/h, z reanalýzy ERA5 (Open-Meteo) za roky 2016–2025 v bodě u základny lokality. Na hřebenech a průsmycích fouká víc. <b>Čas na cestě</b> = let + transfer z letiště na základnu jedním směrem. <b>Bratislava</b> je asi hodinu od Vídně a Ryanair z ní v zimě létá do Alicante, Málagy, Pafu, Barcelony, Palerma a na Lanzarote.</p>
   <p><b>Fotky</b> jsou volně licencované snímky z Wikimedia Commons, hledané podle názvu stoupání (autor v odkazu u fotky). Fotky z kola na cyklistických webech (Climbfinder, PJAMM, Cyclingstage…) nelze vložit kvůli autorským právům, proto na ně vedou přímé odkazy u každé lokality. Mapa: Natural Earth; trasy: OpenStreetMap, BRouter.</p>
 </footer>
 
 <dialog id="wdlg"><button class="dlg-x" id="wdlgX" aria-label="Zavřít">×</button>
   <div class="dbody"><div><div class="eyebrow">Nastavení</div><h2>Jak se počítá index</h2>
-    <p class="hint" style="margin:8px 0 0;color:var(--muted)">Celkový index (0–100) je vážený průměr pěti dílčích skóre. Posuvníky mění, jak moc každé kritérium váží; karty, mapa i řazení se přepočítají hned.</p></div>
+    <p class="hint" style="margin:8px 0 0;color:var(--muted)">Celkový index (0–100) je vážený průměr šesti dílčích skóre. Posuvníky mění, jak moc každé kritérium váží; karty, mapa i řazení se přepočítají hned.</p></div>
     <div class="presets" id="wPresets"></div>
     <div id="wSliders" class="wsl"></div>
     <div style="display:flex;gap:8px"><button class="btn" id="wReset">Obnovit výchozí</button><span style="flex:1"></span><button class="btn pri" id="wDone">Hotovo</button></div>
@@ -501,16 +501,20 @@ function idx(l,m){const t=l.hi[m];let ts=t<18?clamp((t-10)/8,0,1):t>25?clamp(1-(
   const rs=clamp(1-l.rain[m]/12,0,1), ss=clamp(l.sun[m]/10,0,1); return Math.round(100*(.5*ts+.3*rs+.2*ss));}
 /* Tlačítko pro nastavení vah – dává se všude, kde se ukazuje celkový index */
 const wBtn=(t)=>`<button class="wbtn" type="button" data-wopen="1" title="Nastavit váhy indexu"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h7M13 4h1M2 8h2M8 8h6M2 12h8M14 12h0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="11" cy="4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="6" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>${t||"váhy"}</button>`;
-/* Celkový index: vážený průměr pěti dílčích skóre 0–100, váhy si nastaví uživatel */
+/* Celkový index: vážený průměr šesti dílčích skóre 0–100, váhy si nastaví uživatel */
 const FACTORS=[
  {k:"wx",lbl:"Počasí",d:"teplota (ideál 18–24 °C) 50 %, deštivé dny 30 %, slunce 20 %"},
  {k:"cyc",lbl:"Kvalita cest a cyklistiky",d:"průměr hodnocení silnic, klidu na silnicích, kopců a cyklo zázemí (1–5)"},
  {k:"food",lbl:"Gastro",d:"kvalita jídla a pití (1–5)"},
  {k:"dist",lbl:"Čas na cestě",d:"jedním směrem: let (u přestupu celková doba) + transfer z letiště na místo; 2,5 h = 100 bodů, 12 h = 0"},
- {k:"price",lbl:"Cena",d:"odhad na osobu (let + ubytování + kolo + auto); 12 tis. Kč = 100 bodů, 35 tis. Kč = 0"}];
-const W0={wx:35,cyc:27,food:15,dist:8,price:15};
-const PRESETS=[["Vyvážené",W0],["Hlavně počasí",{wx:70,cyc:15,food:5,dist:5,price:5}],["Kopce a silnice",{wx:25,cyc:50,food:10,dist:10,price:5}],
-  ["Gurmáni",{wx:25,cyc:20,food:40,dist:10,price:5}],["Blízko a levně",{wx:25,cyc:15,food:10,dist:20,price:30}]];
+ {k:"price",lbl:"Cena",d:"odhad na osobu (let + ubytování + kolo + auto); 12 tis. Kč = 100 bodů, 35 tis. Kč = 0"},
+ {k:"wind",lbl:"Vítr",d:"průměrný vítr přes den (9–17 h) 60 %: 8 km/h = 100 bodů, 22 km/h = 0; větrné dny (denní průměr ≥ 25 km/h) 40 %: 0 dní = 100, 12 dní = 0"}];
+const W0={wx:32,cyc:24,food:13,dist:7,price:14,wind:10};
+const PRESETS=[["Vyvážené",W0],["Hlavně počasí",{wx:63,cyc:14,food:4,dist:5,price:4,wind:10}],["Kopce a silnice",{wx:23,cyc:45,food:9,dist:9,price:4,wind:10}],
+  ["Gurmáni",{wx:22,cyc:18,food:36,dist:9,price:5,wind:10}],["Blízko a levně",{wx:23,cyc:13,food:9,dist:18,price:27,wind:10}]];
+/* Skóre větru 0–100: průměrná rychlost přes den 60 %, počet větrných dní 40 % */
+const windIdx=(l,m)=>{const v=WIND[l.id];return v?Math.round(100*(.6*clamp((22-v.w[m])/14,0,1)+.4*clamp(1-v.wd[m]/12,0,1))):50;};
+const fmtW=(l,m)=>{const v=WIND[l.id];return v?fmtS(v.w[m]):"–";};
 function parts(l,m){
   const bf=bestFlight(l)||flights(l)[0],f=bf[1],c=cost(l),mid=(c[0]+c[1])/2,sc=l.sc;
   const cycAvg=(sc[0]+sc[1]+sc[2]+sc[3])/4;
@@ -519,7 +523,8 @@ function parts(l,m){
    cyc:{v:Math.round((cycAvg-1)/4*100),x:`silnice ${sc[0]}, klid ${sc[1]}, kopce ${sc[2]}, zázemí ${sc[3]} → ${String(cycAvg.toFixed(1)).replace(".",",")}/5`},
    food:{v:Math.round((l.g.s-1)/4*100),x:`${fmtS(l.g.s)}/5 · ${l.g.p}`},
    dist:{v:Math.round(clamp((12-travel(l))/9.5*100,0,100)),x:`let ${APZ[bf[0]]} ${fmtH(f.t)}${f.d===false?" vč. přestupu":""} + transfer ${fmtH(trOf(l,f))} = ${fmtH(travel(l))} na cestě`},
-   price:{v:Math.round(clamp((35000-mid)/23000*100,0,100)),x:`${fmtK(c[0])}–${fmtK(c[1])} Kč / os. za ${S.n} nocí`}};
+   price:{v:Math.round(clamp((35000-mid)/23000*100,0,100)),x:`${fmtK(c[0])}–${fmtK(c[1])} Kč / os. za ${S.n} nocí`},
+   wind:{v:windIdx(l,m),x:WIND[l.id]?`${fmtW(l,m)} km/h přes den, ${fmtS(WIND[l.id].wd[m])} větrných dní v měsíci`:"data o větru chybí"}};
 }
 const trOf=(l,f)=>f.tr!=null?f.tr:TR[l.id];
 const travel=l=>{const f=(bestFlight(l)||flights(l)[0])[1];return Math.round((f.t+trOf(l,f))*4)/4;};
@@ -558,7 +563,8 @@ const R={idx:[[170,25,35],[225,75,60],[240,150,80],[246,210,90],[150,205,105],[4
          good:[[240,190,175],[246,225,150],[200,230,170],[130,205,150]],
          rain:[[245,240,225],[190,220,240],[120,170,225]],
          sun:[[215,215,215],[250,230,150],[250,190,90]],
-         sea:[[175,205,235],[160,225,220],[150,225,190]]};
+         sea:[[175,205,235],[160,225,220],[150,225,190]],
+         wind:[[210,235,215],[235,235,200],[245,205,150],[235,150,120]]};
 const METRICS={
   tot:{lbl:"Celkový index",get:(l,m)=>total(l,m),fmt:v=>v,col:v=>ramp(R.idx,(v-45)/37),leg:["horší","lepší"],r:R.idx},
   idx:{lbl:"Index počasí",get:(l,m)=>idx(l,m),fmt:v=>v,col:v=>ramp(R.idx,(v-40)/55),leg:["horší","lepší"],r:R.idx},
@@ -566,6 +572,7 @@ const METRICS={
   lo:{lbl:"Min °C",get:(l,m)=>l.lo[m],fmt:v=>v+"°",col:v=>ramp(R.temp,(v-1)/17),leg:["1 °C","18 °C"],r:R.temp},
   rain:{lbl:"Deštivé dny",get:(l,m)=>l.rain[m],fmt:v=>String(v).replace(".",","),col:v=>ramp(R.rain,v/12),leg:["0 dní","12 dní"],r:R.rain},
   sun:{lbl:"Slunce h/den",get:(l,m)=>l.sun[m],fmt:v=>String(v).replace(".",","),col:v=>ramp(R.sun,(v-3)/8),leg:["3 h","11 h"],r:R.sun},
+  wind:{lbl:"Vítr km/h",get:(l,m)=>WIND[l.id]?WIND[l.id].w[m]:null,fmt:v=>v==null?"–":fmtS(v),col:v=>v==null?"#e4e4e4":ramp(R.wind,(v-7)/16),leg:["7 km/h","23 km/h"],r:R.wind},
   sea:{lbl:"Moře °C",get:(l,m)=>l.sea[m],fmt:v=>v==null?"–":String(v).replace(".",",")+"°",col:v=>v==null?"#e4e4e4":ramp(R.sea,(v-12.5)/9),leg:["13 °C","21 °C"],r:R.sea}};
 const CAT=["#d4561e","#2c7fb8","#2f9e5b","#8e44ad","#c99a06","#d6337a","#1b9e9e","#6b5b3e","#5767d6","#a0522d","#4d8f2a","#b8336a","#3f7f99","#c2611f","#7a4fb5","#258a6a"];
 
@@ -641,7 +648,7 @@ function renderControls(){
 }
 function visible(){
   let L=LOC.filter(l=>!(S.hideKnown&&l.known)).filter(l=>!S.direct||bestFlight(l));
-  const m=S.m,k={tot:l=>-total(l,m),idx:l=>-idx(l,m),hi:l=>-l.hi[m],rain:l=>l.rain[m],sun:l=>-l.sun[m],flight:l=>travel(l),
+  const m=S.m,k={tot:l=>-total(l,m),idx:l=>-idx(l,m),hi:l=>-l.hi[m],rain:l=>l.rain[m],wind:l=>WIND[l.id]?WIND[l.id].w[m]:99,sun:l=>-l.sun[m],flight:l=>travel(l),
     price:l=>cost(l)[0],hills:l=>-hillScore(l)-l.hi[m]/100,food:l=>-l.g.s-l.g.p.length/10,name:l=>l.name}[S.sort];
   return L.sort((a,b)=>{const x=k(a),y=k(b);return typeof x==="string"?x.localeCompare(y,"cs"):x-y});
 }
@@ -667,6 +674,7 @@ function renderGrid(){
       <div class="wx">
         <div><b>${l.hi[m]}°</b><small>max</small></div><div><b>${l.lo[m]}°</b><small>min</small></div>
         <div><b>${String(l.rain[m]).replace(".",",")}</b><small>dny deště</small></div><div><b>${String(l.sun[m]).replace(".",",")}</b><small>h slunce</small></div>
+        <div><b>${fmtW(l,m)}</b><small>km/h vítr</small></div>
       </div>
       <dl class="facts">
         <dt>Let</dt><dd>${flightLines(l)}</dd>
@@ -729,6 +737,7 @@ function renderCmp(){
     ["Teplota max / min",l=>`<b>${l.hi[m]}°</b> / ${l.lo[m]}°`,best(l=>l.hi[m],1)],
     ["Deštivé dny",l=>String(l.rain[m]).replace(".",","),best(l=>l.rain[m],-1)],
     ["Slunce h/den",l=>String(l.sun[m]).replace(".",","),best(l=>l.sun[m],1)],
+    ["Vítr přes den",l=>WIND[l.id]?`<b>${fmtW(l,m)} km/h</b> · ${fmtS(WIND[l.id].wd[m])} větrných dní`:"–",best(l=>WIND[l.id]?WIND[l.id].w[m]:99,-1)],
     ["Moře",l=>METRICS.sea.fmt(l.sea[m])],
     ["Teploty leden → květen",l=>`<span style="font-size:13px">${l.hi.join("° · ")}°</span>`],
     ["Let",l=>flightLines(l)+`<div style="font-size:12.5px;color:var(--muted);margin-top:4px">${flights(l).map(([k,f])=>k+": "+f.a).join("<br>")}</div>`,best(l=>(bestFlight(l)||flights(l)[0])[1].t,-1)],
@@ -753,6 +762,7 @@ function renderCmp(){
 function renderTable(){
   const m=S.m, cols=[["name","Lokalita",l=>l.name,l=>`<a data-open="${l.id}">${l.name}</a>${l.known?' <span style="color:var(--muted)">· byli</span>':""}`],
     ["tot","Index "+wBtn(),l=>total(l,m),l=>`<span data-idx="${l.id}" style="cursor:help;font-weight:600">${total(l,m)}</span>`],["idx","Počasí",l=>idx(l,m)],["hi","Max °C",l=>l.hi[m]],["lo","Min °C",l=>l.lo[m]],["rain","Déšť dny",l=>l.rain[m]],["sun","Slunce h",l=>l.sun[m]],
+    ["wind","Vítr km/h",l=>WIND[l.id]?WIND[l.id].w[m]:99,l=>`<span title="${WIND[l.id]?fmtS(WIND[l.id].wd[m])+" větrných dní (≥ 25 km/h)":""}">${fmtW(l,m)}</span>`],
     ["sea","Moře °C",l=>l.sea[m]??-1,l=>METRICS.sea.fmt(l.sea[m])],
     ["fl","Na cestě",l=>travel(l),l=>{const [k,f]=bestFlight(l)||flights(l)[0];return `${fmtH(travel(l))} <span class="dir ${dirTxt(f.d)[1]}" title="let ${fmtH(f.t)}, ${dirTxt(f.d)[0]}, transfer ${fmtH(TR[l.id])}">${k}</span>`}],
     ["price","Cena od (Kč)",l=>cost(l)[0],l=>{const c=cost(l);return fmtK(c[0])+"–"+fmtK(c[1])}],
@@ -795,8 +805,10 @@ function openDetail(id){
         <tr><td>Min °C</td>${l.lo.map(v=>`<td class="num" style="color:var(--road);font-weight:600">${fmtS(v)}°</td>`).join("")}</tr>
         <tr><td>Déšť (dny)</td>${l.rain.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
         <tr><td>Slunce (h)</td>${l.sun.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
-        <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr></table></div>
-        <p class="srcline">Stanice: ${l.cl.st}${l.cl.est?" · hodnoty jsou orientační normály, v tomto průzkumu neověřené":""}${cite(l.cl.src)}</p></div>
+        <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr>
+        ${WIND[l.id]?`<tr><td>Vítr (km/h)</td>${WIND[l.id].w.map(v=>`<td class="num">${fmtS(v)}</td>`).join("")}</tr>
+        <tr><td>Větrné dny</td>${WIND[l.id].wd.map(v=>`<td class="num">${fmtS(v)}</td>`).join("")}</tr>`:""}</table></div>
+        <p class="srcline">Stanice: ${l.cl.st}${l.cl.est?" · hodnoty jsou orientační normály, v tomto průzkumu neověřené":""}${cite(l.cl.src)}${WIND[l.id]?` · vítr: průměr 9–17 h v letech 2016–2025 u ${WIND[l.id].at} (ERA5), větrný den = denní průměr ≥ 25 km/h${cite(["om_wind"])}`:""}</p></div>
       <div><div class="eyebrow" style="margin-bottom:6px">Odhad ceny na osobu · ${S.n} nocí · ${S.ap==="ALL"?"levnější letiště":S.ap}</div>
         <p style="margin:0 0 6px;font:700 28px var(--f-display)">${fmtK(c[0])} – ${fmtK(c[1])} Kč</p>
         ${(()=>{const p=costParts(l),k=v=>fmtK(v*EUR);return `<table class="climbs">
@@ -960,9 +972,12 @@ $("#rdlgX").addEventListener("click",()=>$("#rdlg").close());
 $("#rdlg").addEventListener("click",e=>{if(e.target.id==="rdlg")e.target.close()});
 
 /* ---------- index breakdown + weights ---------- */
+/* v4: přibyl vítr. Uložené výchozí váhy nebo předvolby z doby před větrem se převedou na nové */
+if(S.w&&S.w.wind==null){const OLD=[[35,27,15,8,15],[70,15,5,5,5],[25,50,10,10,5],[25,20,40,10,5],[25,15,10,20,30]],ks=["wx","cyc","food","dist","price"];
+  const i=OLD.findIndex(o=>ks.every((k,j)=>S.w[k]===o[j]));if(i>=0)S.w={...PRESETS[i][1]};}
 S.w={...W0,...(S.w||{})};
 if(!S.v2){S.sort="tot";S.metric="tot";S.tblSort={k:"tot",dir:-1};S.v2=1}
-if(!S.v3){const old={wx:35,cyc:25,food:15,dist:15,price:10};if(FACTORS.every(F=>S.w[F.k]===old[F.k]))S.w={...W0};S.v3=1}
+if(!S.v3){const old={wx:35,cyc:25,food:15,dist:15,price:10};if(Object.keys(old).every(k=>S.w[k]===old[k]))S.w={...W0};S.v3=1}
 function itipHTML(l){const m=S.m,p=parts(l,m),w=S.w,sum=FACTORS.reduce((a,F)=>a+w[F.k],0)||1;
   return `<h4>${l.name} · index ${total(l,m)}</h4><div style="color:var(--muted);margin:-4px 0 6px">${MONTHS[m]}, odlet ${S.ap==="ALL"?"nejrychlejší z Prahy, Vídně a Bratislavy":APN[S.ap]}, ${S.n} nocí</div>
   <div class="ir" style="border:0;color:var(--muted);font-size:11.5px"><span>kritérium</span><span class="num">skóre</span><span class="w">váha</span></div>
@@ -1093,7 +1108,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");i
   else if(t.dataset.lc){const l=byId(t.dataset.lc);S.lcOff[l.id]=t.getAttribute("aria-pressed")==="true";renderLine()}
   else if(t.id==="dlgX"){$("#dlg").close()}});
 document.addEventListener("click",e=>{const th=e.target.closest("th[data-sort]");if(!th||e.target.closest("[data-wopen]"))return;const k=th.dataset.sort;
-  S.tblSort=S.tblSort.k===k?{k,dir:-S.tblSort.dir}:{k,dir:k==="name"||k==="rain"||k==="fl"||k==="price"?1:-1};renderTable();save()});
+  S.tblSort=S.tblSort.k===k?{k,dir:-S.tblSort.dir}:{k,dir:k==="name"||k==="rain"||k==="wind"||k==="fl"||k==="price"?1:-1};renderTable();save()});
 $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()});
 $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});

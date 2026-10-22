@@ -30,6 +30,9 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
   // každá lokalita má gastro, trasy a polohu na mapě
   const incomplete = await page.evaluate(() => LOC.filter((l) => !GASTRO[l.id] || !ROUTES[l.id] || !GEO[l.id] || TR[l.id] == null).map((l) => l.id));
   if (incomplete.length) fail(`neúplná lokalita (GASTRO/ROUTES/GEO/TR): ${incomplete.join(', ')}`);
+  // každá lokalita má vítr na leden–květen (tools/fetch-wind.mjs)
+  const noWind = await page.evaluate(() => LOC.filter((l) => !WIND[l.id] || WIND[l.id].w.length !== 5 || WIND[l.id].wd.length !== 5).map((l) => l.id));
+  if (noWind.length) fail(`chybí vítr ve WIND (spusť node tools/fetch-wind.mjs): ${noWind.join(', ')}`);
   // každý klíč zdroje existuje v SRC
   const badSrc = await page.evaluate(() => { const b = []; const chk = (ks, w) => (ks || []).forEach((k) => { if (!SRC[k]) b.push(`${w}:${k}`); });
     LOC.forEach((l) => { chk(l.cl.src, l.id); chk(l.cs.src, l.id); chk(l.web, l.id); Object.values(l.f).forEach((f) => chk(f.src, l.id)); l.climbs.forEach((c) => c[4] && chk([c[4]], l.id)); chk(GASTRO[l.id].src, l.id); });
