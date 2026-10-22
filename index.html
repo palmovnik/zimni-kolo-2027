@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zimní kolo 2027</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky control strip (měsíc, letiště, filtry) nad čtyřmi pohledy — karty, počasí (heatmapa + graf), srovnání, tabulka. */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --surface-2:#e8ece6; --ink:#17201c; --muted:#5b6862; --line:#d3d9d2;
+  --accent:#d4561e; --accent-ink:#ffffff; --road:#2f4b44; --good:#2f7d4f; --warn:#b07a12; --bad:#b23b2c;
+  --chip:#e1e7df; --shadow:0 1px 2px rgba(20,30,25,.06),0 6px 20px rgba(20,30,25,.06);
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#1a2320; --surface-2:#232e2a; --ink:#e7ece8; --muted:#9aa9a2; --line:#2e3b36;
+  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68;
+  --chip:#26322e; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#1a2320; --surface-2:#232e2a; --ink:#e7ece8; --muted:#9aa9a2; --line:#2e3b36;
+  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68;
+  --chip:#26322e; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);font-variant-numeric:tabular-nums}
+img{max-width:100%}
+[hidden]{display:none!important}
+button,select,input{font:inherit;color:inherit}
+a{color:var(--road)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+.eyebrow{font:600 12px/1 var(--f-body);text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+
+/* Header */
+header.top{padding-block:28px 18px}
+.top h1{font-size:clamp(34px,6vw,56px);line-height:.95;font-weight:700;text-transform:uppercase}
+.top h1 span{color:var(--accent)}
+.top p{max-width:68ch;color:var(--muted);margin:10px 0 0}
+.elev{display:block;width:100%;height:38px;margin-top:14px}
+.elev path{fill:none;stroke:var(--accent);stroke-width:2}
+.elev .base{stroke:var(--line);stroke-width:1}
+
+/* Controls */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.controls .wrap{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-block:10px}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl>label.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
+.seg{display:inline-flex;background:var(--chip);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button:focus-visible,.tab:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+select{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:14px 0;scrollbar-width:none}
+.tab{border:0;background:none;padding:8px 14px 10px;cursor:pointer;font:600 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .n{display:inline-block;min-width:20px;padding:2px 6px;margin-left:4px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:600 12px/1.2 var(--f-body)}
+
+main{padding-block:20px 60px}
+.pick{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin:0 0 18px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.pick b{font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.03em}
+.pick a{font-weight:600;text-decoration:none;color:var(--ink);border-bottom:2px solid var(--accent);cursor:pointer}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:18px}
+.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.ph{position:relative;aspect-ratio:16/9;max-width:100%;background:var(--surface-2);overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .fb{position:absolute;inset:0;width:100%;height:100%}
+.ph .tagrow{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.badge{font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.08em;padding:5px 7px;border-radius:5px;background:#fff;color:#17201c}
+.badge.known{background:#17201c;color:#fff}
+.badge.best{background:#f0773f;color:#1a0d06}
+.ph .credit{position:absolute;right:6px;bottom:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px #000;opacity:.85;text-decoration:none}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.ctitle{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ctitle h3{font-size:26px;line-height:1;text-transform:uppercase}
+.ctitle .sub{font-size:13px;color:var(--muted);margin-top:3px}
+.idx{flex:none;text-align:center;min-width:52px;padding:5px 6px;border-radius:8px;font-family:var(--f-display);color:#17201c}
+.idx b{display:block;font-size:22px;line-height:1}
+.idx small{font:600 9px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.06em}
+.wx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface-2);border-radius:8px;padding:8px}
+.wx div{text-align:center;min-width:0}
+.wx b{display:block;font:600 19px/1.1 var(--f-display)}
+.wx small{font-size:11px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px;margin:0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;min-width:0}
+.dir{font-weight:600}
+.dir.y{color:var(--good)} .dir.s{color:var(--warn)} .dir.n{color:var(--bad)}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px}
+.pc ul{margin:0;padding-left:16px}
+.pc h4{margin:0 0 3px;font:600 11px/1 var(--f-body);text-transform:uppercase;letter-spacing:.1em}
+.pc .p h4{color:var(--good)} .pc .c h4{color:var(--bad)}
+.cfoot{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:4px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:14px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[aria-pressed="true"]{background:var(--road);border-color:var(--road);color:var(--surface)}
+.terrain{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:12px;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--ink)}
+
+/* Weather */
+.panel{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:16px;min-width:0}
+.panel+.panel{margin-top:18px}
+.panel h2{font-size:24px;text-transform:uppercase}
+.panel .hint{color:var(--muted);font-size:13.5px;margin:4px 0 12px;max-width:80ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+.hm th,.hm td{padding:0;border:2px solid var(--surface)}
+.hm thead th{font:600 12px/1 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 4px;text-align:center}
+.hm thead th.cur{color:var(--accent)}
+.hm th.loc{width:1%;text-align:left;font-weight:600;padding:6px 10px 6px 0;white-space:nowrap;font-size:14px}
+.hm th.loc small{color:var(--muted);font-weight:400}
+.hm td{text-align:center;font:600 16px/1 var(--f-display);color:#17201c;height:34px;min-width:58px;border-radius:4px}
+.hm td.cur{outline:2px solid var(--ink);outline-offset:-2px}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.legend .bar{height:10px;width:160px;border-radius:5px}
+.chartwrap{position:relative}
+svg.lc{width:100%;height:auto;display:block}
+svg.lc text{fill:var(--muted);font:12px var(--f-body)}
+svg.lc .grid line{stroke:var(--line)}
+.lcleg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lcleg button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:3px 10px 3px 6px;cursor:pointer;font-size:13px}
+.lcleg button i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.lcleg button[aria-pressed="false"]{opacity:.45}
+.lcleg button[aria-pressed="false"] i{background:var(--line)!important}
+
+/* Compare */
+.cmp{display:grid;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.cmp .row{display:contents}
+.cmp .cell{padding:10px 12px;border-bottom:1px solid var(--line);min-width:0;font-size:14px}
+.cmp .rh{font:600 12px/1.3 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--surface-2)}
+.cmp .head{font:700 22px/1 var(--f-display);text-transform:uppercase}
+.cmp .head small{display:block;font:400 12px var(--f-body);text-transform:none;color:var(--muted);margin-top:4px}
+.cmp .win{background:color-mix(in srgb,var(--good) 14%,transparent)}
+.cmp ul{margin:0;padding-left:16px}
+.empty{padding:30px;text-align:center;color:var(--muted);background:var(--surface);border-radius:12px;border:1px dashed var(--line)}
+.bars{display:flex;gap:2px;align-items:center}
+.bars i{display:block;width:14px;height:6px;border-radius:2px;background:var(--line)}
+.bars i.on{background:var(--road)}
+
+/* Table */
+.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;font-size:14px}
+.tbl th{font:600 12px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;user-select:none;position:sticky;top:0;background:var(--surface)}
+.tbl th[aria-sort="ascending"]::after{content:" ▲"} .tbl th[aria-sort="descending"]::after{content:" ▼"}
+.tbl td.num,.tbl th.num{text-align:right}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl a{cursor:pointer;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted)}
+
+/* Dialog */
+dialog{border:0;padding:0;border-radius:14px;max-width:min(920px,calc(100vw - 24px));width:100%;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,15,12,.6)}
+.dlg-x{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:10px;z-index:2;border:0;background:rgba(0,0,0,.55);color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer}
+.gal{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;aspect-ratio:21/9;max-width:100%}
+.gal .ph{aspect-ratio:auto}
+.gal .ph:first-child{grid-row:1/3}
+.dbody{padding:18px 20px 22px;display:grid;gap:18px}
+.dbody h2{font-size:34px;text-transform:uppercase;line-height:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.two>*{min-width:0}
+.climbs{width:100%;font-size:14px}
+.climbs td{padding:5px 6px;border-bottom:1px solid var(--line)}
+.climbs td.num{text-align:right;white-space:nowrap}
+.tip{background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;font-size:14.5px}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{font-size:13.5px;font-weight:600;text-decoration:none;border:1px solid var(--line);padding:5px 10px;border-radius:7px;color:var(--ink)}
+footer{color:var(--muted);font-size:13px;padding-block:20px 40px;border-top:1px solid var(--line)}
+footer p{max-width:90ch}
+
+@media (max-width:640px){
+  .pc,.two{grid-template-columns:1fr}
+  .gal{grid-template-columns:1fr;grid-template-rows:auto;aspect-ratio:auto}
+  .gal .ph{aspect-ratio:16/9}.gal .ph:not(:first-child){display:none}
+  .gal .ph:first-child{grid-row:auto}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .15s}.card:hover{transform:translateY(-2px)}}
+</style>
+</head>
+<body>
+
+<header class="top wrap">
+  <div class="eyebrow">Silniční kola · leden – květen · 4–5 nocí · 5–6 lidí</div>
+  <h1>Zimní <span>kolo</span> 2027</h1>
+  <p>Přehled lokalit, kam se dá z Prahy nebo z Vídně odletět za teplem a kopci. Vyber měsíc a letiště: karty, heatmapa i ceny se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko.</p>
+  <svg class="elev" viewBox="0 0 1000 38" preserveAspectRatio="none" aria-hidden="true"><path class="base" d="M0 37H1000"/><path d="M0 34 L60 33 L110 30 L150 22 L190 12 L215 6 L240 14 L290 28 L340 31 L380 26 L430 18 L470 24 L520 32 L570 30 L610 20 L650 9 L680 3 L705 9 L750 25 L800 33 L850 30 L890 22 L930 27 L1000 34"/></svg>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <div class="ctl"><label class="lbl">Měsíc</label><div class="seg" id="monthSeg" role="group" aria-label="Měsíc"></div></div>
+    <div class="ctl"><label class="lbl">Odlet</label><div class="seg" id="apSeg" role="group" aria-label="Letiště">
+      <button data-ap="ALL">Obojí</button><button data-ap="PRG">Praha</button><button data-ap="VIE">Vídeň</button></div></div>
+    <div class="ctl"><label class="lbl">Noci</label><div class="seg" id="nSeg" role="group" aria-label="Počet nocí"><button data-n="4">4</button><button data-n="5">5</button></div></div>
+    <div class="ctl">
+      <label class="toggle"><input type="checkbox" id="fDirect"> jen přímé lety</label>
+      <label class="toggle"><input type="checkbox" id="fKnown"> skrýt už navštívené</label>
+    </div>
+    <div class="ctl"><label class="lbl" for="sortSel">Řadit</label>
+      <select id="sortSel">
+        <option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option>
+        <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší let</option><option value="price">Nejlevnější</option>
+        <option value="hills">Nejvíc kopců</option><option value="name">Abecedně</option>
+      </select></div>
+  </div>
+  <div class="wrap"><nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="lokality">Lokality</button>
+    <button class="tab" role="tab" data-tab="pocasi">Počasí</button>
+    <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
+    <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
+  </nav></div>
+</div>
+
+<main class="wrap">
+  <div class="pick" id="pick"></div>
+  <section id="v-lokality" role="tabpanel"><div class="grid" id="grid"></div></section>
+  <section id="v-pocasi" role="tabpanel" hidden>
+    <div class="panel">
+      <h2>Heatmapa podle měsíců</h2>
+      <p class="hint">Každý řádek je lokalita, sloupce jsou měsíce. Klikni na název pro detail. Index počasí kombinuje teplotu (ideál 18–24 °C), počet deštivých dní a slunce.</p>
+      <div class="ctl" style="margin-bottom:10px"><div class="seg" id="metricSeg" role="group" aria-label="Metrika"></div></div>
+      <div class="scroll"><table class="hm" id="hm"></table></div>
+      <div class="legend" id="hmLegend"></div>
+    </div>
+    <div class="panel">
+      <h2>Průběh teplot</h2>
+      <p class="hint">Průměrné denní maximum (plná čára) a minimum (tečkovaně) na pobřeží, kde se bydlí. V horách bývá o 8–15 °C chladněji. Lokality zapínej a vypínej v legendě; výchozí výběr jsou ty v porovnání.</p>
+      <div class="chartwrap"><svg class="lc" id="lc" viewBox="0 0 760 340" role="img" aria-label="Graf teplot"></svg></div>
+      <div class="lcleg" id="lcleg"></div>
+    </div>
+  </section>
+  <section id="v-srovnani" role="tabpanel" hidden><div id="cmpWrap"></div></section>
+  <section id="v-tabulka" role="tabpanel" hidden>
+    <div class="panel"><h2>Všechny lokality</h2><p class="hint">Klikni na hlavičku sloupce pro řazení. Počasí je pro zvolený měsíc, cena a let pro zvolené letiště.</p>
+    <div class="scroll"><table class="tbl" id="tbl"></table></div></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p><b>Jak číst čísla.</b> Klima jsou dlouhodobé průměry pro pobřeží (zaokrouhleno). Lety a ceny jsou orientační pro zimní řád 2026/27 a jaro 2027: zpáteční letenka na osobu s příručním zavazadlem, cena při rezervaci 6–10 týdnů dopředu. U „sezónně / ověřit“ se linka v některých letech provozuje jen část zimy nebo jako charter. Odhad celkové ceny = letenka + ubytování (sdílený apartmán/hotel pro 6) + půjčení karbonového silničního kola na každý den + podíl na autě/transferu; kurz 24,5 Kč/€. Fotografie se načítají z Wikipedie (Wikimedia Commons, autoři v odkazu).</p>
+</footer>
+
+<dialog id="dlg"><button class="dlg-x" id="dlgX" aria-label="Zavřít">×</button><div id="dlgBody"></div></dialog>
+
+<script>
+const MONTHS=["Leden","Únor","Březen","Duben","Květen"], MS=["Led","Úno","Bře","Dub","Kvě"], EUR=24.5;
+
+/* d: true = přímý let celou sezónu, "s" = přímé sezónně / ověřit, false = s přestupem
+   p: zpáteční letenka Kč/os, hotel €/os/noc, bike €/den, car €/os/pobyt, sc: silnice, klid, hory, zázemí, rozmanitost (1–5) */
+const LOC=[
+{id:"mallorca",name:"Mallorca",region:"Baleáry, Španělsko",known:true,best:[2,3,4],
+ wiki:["Sa Calobra","Serra de Tramuntana","Cap de Formentor"],
+ terrain:["hory","rovinky","pobřeží"],type:["silnice"],
+ hi:[15,16,18,20,24],lo:[6,6,8,10,14],rain:[6,5,5,6,4],sun:[5.5,6.5,7,8,9.5],sea:[14,13.5,14,15.5,18],
+ f:{PRG:{d:"s",t:2.3,a:"Smartwings, Ryanair, Eurowings – v zimě hlavně s přestupem, přímé od března",p:[3500,7000]},
+    VIE:{d:true,t:2.1,a:"Ryanair, Austrian, Eurowings",p:[2500,6000]}},
+ transfer:"PMI → Port de Pollença / Alcúdia 50 min",hotel:[40,70],bike:[30,50],car:[20,45],
+ sc:[5,4,4,5,4],elev:"1 200–2 500 m/den",
+ climbs:[["Sa Calobra","9,4 km","670 m","7 %"],["Puig Major (z Sóller)","14 km","800 m","6 %"],["Cap de Formentor","—","~500 m","zvlněné"]],
+ pros:["Nejlepší cyklistická infrastruktura v Evropě","Hory i placky na jednom ostrově","Hodně levných letů z Vídně"],
+ cons:["Už znáte","V březnu a dubnu přeplněno cyklisty","V lednu chladná rána a víc deště"],
+ tip:"Referenční lokalita. Pro změnu zkuste bydlet na jihu (Llucmajor, Santanyí), kde jsou klidnější silnice a jiné okruhy."},
+
+{id:"tenerife",name:"Tenerife",region:"Kanárské ostrovy, Španělsko",known:true,best:[0,1,2,3],
+ wiki:["Teide National Park","Masca","Teide"],
+ terrain:["dlouhá stoupání","vulkán"],type:["silnice"],
+ hi:[22,22,23,23,24],lo:[15,15,16,16,17],rain:[3,3,2,1,0.5],sun:[6,7,7.5,8,9],sea:[19.5,19,19,19.5,20.5],
+ f:{PRG:{d:true,t:5.5,a:"Smartwings",p:[6500,12000]},VIE:{d:true,t:5.3,a:"Austrian, Ryanair, Wizz Air",p:[5500,11000]}},
+ transfer:"TFS → Adeje / Los Cristianos 20 min",hotel:[40,75],bike:[40,60],car:[25,50],
+ sc:[4,3,5,4,3],elev:"1 500–3 000 m/den",
+ climbs:[["Teide z Los Cristianos (přes Vilaflor)","40 km","2 100 m","5 %"],["Masca","7 km","~600 m","8 %"],["Teide z La Orotava","35 km","2 000 m","6 %"]],
+ pros:["Nejjistější teplo v zimě","Výstup na Teide 2 000+ výškových metrů","Přímý let z Prahy"],
+ cons:["Už znáte","Dlouhý let 5,5 h","Na Teide v lednu chladno, občas sníh"],
+ tip:"Referenční lokalita, nejteplejší jistota v lednu."},
+
+{id:"grancanaria",name:"Gran Canaria",region:"Kanárské ostrovy, Španělsko",known:true,best:[0,1,2,3],
+ wiki:["Roque Nublo","Pico de las Nieves","Maspalomas Dunes"],
+ terrain:["hory","serpentiny"],type:["silnice"],
+ hi:[23,23,24,24,25],lo:[15,15,16,16,17],rain:[2,2,2,1,0.5],sun:[6.5,7,7.5,8,9],sea:[19.5,19,19,19.5,20.5],
+ f:{PRG:{d:true,t:5.5,a:"Smartwings",p:[6500,12000]},VIE:{d:true,t:5.4,a:"Austrian, Ryanair",p:[5500,11000]}},
+ transfer:"LPA → Maspalomas 30 min",hotel:[40,70],bike:[35,55],car:[25,50],
+ sc:[4,3,5,4,4],elev:"1 500–3 000 m/den",
+ climbs:[["Pico de las Nieves","~30 km","1 900 m","6 %"],["Soria – Cruz de San Antonio","15 km","900 m","6 %"],["Ayacata z Maspalomas","32 km","1 300 m","4 %"]],
+ pros:["Nejsušší z Kanár","Krásné serpentiny ve vnitrozemí","Přímé lety z obou letišť"],
+ cons:["Už znáte","Dlouhý let","Jih je hodně turistický"],
+ tip:"Referenční lokalita."},
+
+{id:"lanzarote",name:"Lanzarote",region:"Kanárské ostrovy, Španělsko",known:false,best:[0,1,2,3],
+ wiki:["Timanfaya National Park","Mirador del Río","La Geria"],
+ terrain:["zvlněné","vulkanické pláně","vítr"],type:["silnice","gravel"],
+ hi:[21,22,23,24,25],lo:[14,14,15,15,17],rain:[3,2,2,1,0.5],sun:[6.5,7,8,8.5,9.5],sea:[19,18.5,18.5,19,20],
+ f:{PRG:{d:"s",t:5.2,a:"Smartwings (zimní lety, ověřit)",p:[6500,12000]},VIE:{d:true,t:5,a:"Ryanair, Austrian",p:[5000,10000]}},
+ transfer:"ACE → Costa Teguise / Puerto del Carmen 15 min",hotel:[40,70],bike:[35,55],car:[25,45],
+ sc:[5,4,2,5,3],elev:"800–1 500 m/den",
+ climbs:[["Tabayesco","9,5 km","580 m","6 %"],["Femés z Playa Blanca","5 km","330 m","7 %"],["Mirador del Río přes Haría","—","~600 m","zvlněné"]],
+ pros:["Teplo a sucho jako na Kanárech, ale jiná, měsíční krajina","Vynikající asfalt, málo aut","Club La Santa: specializovaný sportovní resort"],
+ cons:["Silný pasát, vítr je hlavní soupeř","Kopce krátké, max. ~600 m n. m.","Dlouhý let"],
+ tip:"Dobrá volba, pokud chcete kanárské teplo bez nekonečných stoupání. Na vítr počítejte s jízdou v háku a kratšími okruhy."},
+
+{id:"lapalma",name:"La Palma",region:"Kanárské ostrovy, Španělsko",known:false,best:[1,2,3,4],
+ wiki:["Roque de los Muchachos","Caldera de Taburiente National Park","Santa Cruz de La Palma"],
+ terrain:["extrémní stoupání","sopky","les"],type:["silnice"],
+ hi:[21,21,22,22,23],lo:[15,15,15,16,17],rain:[5,4,3,2,1],sun:[5,5.5,6,6.5,7],sea:[19.5,19,19,19.5,20.5],
+ f:{PRG:{d:false,t:10,a:"přes Madrid nebo Tenerife (Iberia, Binter)",p:[10000,18000]},VIE:{d:false,t:9,a:"přes Madrid, Frankfurt nebo Tenerife",p:[9000,16000]}},
+ transfer:"SPC → Los Llanos 40 min",hotel:[35,60],bike:[35,55],car:[30,60],
+ sc:[4,5,5,3,4],elev:"2 000–3 500 m/den",
+ climbs:[["Roque de los Muchachos ze Santa Cruz","~42 km","2 400 m","6 %"],["Roque z Puntagordy","~30 km","1 800 m","7 %"],["Cumbre Vieja (Fuencaliente)","~20 km","900 m","5 %"]],
+ pros:["Jedno z nejdelších stoupání v Evropě (2 400 m v kuse)","Velmi klidné silnice, zelený ostrov","Kanárské teplo, téměř bez turistů"],
+ cons:["Bez přímého letu, cesta zabere celý den","Málo plochých kilometrů, jen pro silné jezdce","Na Roque v zimě chladno a mlha, občas sníh"],
+ tip:"Nejlepší jako kombinace: přímý let na Tenerife a pak 30 min Binterem nebo trajektem. Pro 4–5 nocí je ale přesun náročný."},
+
+{id:"costablanca",name:"Costa Blanca",region:"Calpe / Dénia, Španělsko",known:false,best:[1,2,3],
+ wiki:["Calp","Peñón de Ifach","Guadalest"],
+ terrain:["hory","pobřeží","serpentiny"],type:["silnice"],
+ hi:[17,18,20,22,25],lo:[7,7,9,11,14],rain:[4,3,3,4,3],sun:[6,7,7,8,9.5],sea:[14.5,14,14.5,16,18.5],
+ f:{PRG:{d:"s",t:3,a:"Ryanair / Smartwings do Alicante (ověřit), jinak přes Valencii",p:[4000,8000]},VIE:{d:true,t:2.9,a:"Ryanair, Austrian (sezónně)",p:[3000,7000]}},
+ transfer:"ALC → Calpe 1 h",hotel:[30,55],bike:[30,50],car:[20,45],
+ sc:[5,4,4,5,4],elev:"1 200–2 200 m/den",
+ climbs:[["Coll de Rates","6,5 km","360 m","5,5 %"],["Port de Tudons","~15 km","800 m","5 %"],["Xorret de Catí","4 km","370 m","9 %"],["Vall d'Ebo","~10 km","500 m","5 %"]],
+ pros:["Zimní základna profi týmů, silnice jako stvořené pro kolo","Nejsušší pevninské Španělsko, levné ubytování","Krátký let a 1 h transfer"],
+ cons:["V lednu chladná rána (6–8 °C) a krátké dny","Z Prahy přímé lety nejisté","Pobřeží zastavěné, krása je ve vnitrozemí"],
+ tip:"Silný kandidát na únor–březen. Bydlet v Calpe nebo Altea, jezdit do údolí Vall de Guadalest a Vall de Pop."},
+
+{id:"girona",name:"Girona",region:"Katalánsko, Španělsko",known:false,best:[2,3,4],
+ wiki:["Girona","Costa Brava","Tossa de Mar"],
+ terrain:["kopce","pobřeží","gravel"],type:["silnice","gravel"],
+ hi:[14,15,17,19,23],lo:[3,4,6,8,12],rain:[5,5,6,8,8],sun:[5,6,6.5,7,8],sea:[13,12.5,13,14.5,17],
+ f:{PRG:{d:true,t:2.3,a:"Vueling, Smartwings, Ryanair (do Barcelony)",p:[3000,6500]},VIE:{d:true,t:2.5,a:"Austrian, Vueling, Ryanair, Level",p:[2500,6000]}},
+ transfer:"BCN → Girona 1 h 15 (vlak nebo auto)",hotel:[40,70],bike:[40,60],car:[25,50],
+ sc:[4,4,4,5,5],elev:"1 000–2 000 m/den",
+ climbs:[["Rocacorba","13,8 km","880 m","6,5 %"],["Els Àngels","11 km","430 m","4 %"],["Mare de Déu del Mont","~18 km","~900 m","5 %"],["Pobřežní GI-682 Sant Feliu – Tossa","22 km","zvlněné","—"]],
+ pros:["Evropské hlavní město cyklistiky, bydlí tu desítky profíků","Nejvíc levných přímých letů z obou letišť","Skvělé jídlo, kavárny a gravel"],
+ cons:["V lednu a únoru jen 14–15 °C a ráno kolem 3 °C","Víc deště než jih Španělska","Dražší půjčovny a ubytování"],
+ tip:"Ideální na duben. Pro březen sledujte předpověď, je tu nejvíc výkyvů ze všech španělských lokalit."},
+
+{id:"andalusie",name:"Andalusie",region:"Málaga / Ronda, Španělsko",known:false,best:[1,2,3,4],
+ wiki:["Ronda","Caminito del Rey","Sierra de las Nieves National Park"],
+ terrain:["hory","bílé vesnice"],type:["silnice","gravel"],
+ hi:[17,18,20,22,25],lo:[8,8,10,11,14],rain:[6,5,5,5,3],sun:[5.5,6.5,7,8,9.5],sea:[15.5,15,15,16,18],
+ f:{PRG:{d:"s",t:3.8,a:"Smartwings / Ryanair do Málagy (ověřit), jinak s přestupem",p:[4000,8500]},VIE:{d:true,t:3.7,a:"Ryanair, Austrian",p:[3500,7500]}},
+ transfer:"AGP → Marbella 45 min, → Ronda 1 h 30",hotel:[30,60],bike:[35,55],car:[25,50],
+ sc:[4,4,4,3,5],elev:"1 300–2 500 m/den",
+ climbs:[["San Pedro – Ronda (A-397)","~45 km","1 100 m","3 %"],["Puerto de las Palomas (Grazalema)","13 km","900 m","6,5 %"],["Puerto de Ojén","~12 km","500 m","4 %"]],
+ pros:["Obrovský výběr dlouhých táhlých stoupání","Kultura: Ronda, bílé vesnice, tapas","Vnitrozemí téměř bez provozu"],
+ cons:["Pobřeží kolem Málagy je rušné","Ve vnitrozemí v zimě o dost chladněji","Z Prahy jen nejisté přímé lety"],
+ tip:"Bydlet v Marbelle nebo Esteponě a jezdit do Sierra de las Nieves; na dubnový víkend zkusit noc v Rondě."},
+
+{id:"kypr",name:"Kypr",region:"Pafos / Limassol",known:false,best:[1,2,3],
+ wiki:["Troodos Mountains","Paphos","Aphrodite's Rock"],
+ terrain:["hory","pobřeží"],type:["silnice","MTB"],
+ hi:[18,18,20,23,27],lo:[9,8,10,13,16],rain:[9,7,5,3,1],sun:[6,7,7.5,9,11],sea:[18,17,17,18,21],
+ f:{PRG:{d:true,t:3.5,a:"Smartwings (Larnaka), Ryanair / Wizz (Pafos, ověřit)",p:[4000,8500]},VIE:{d:true,t:3.2,a:"Austrian (Larnaka), Ryanair (Pafos)",p:[3500,8000]}},
+ transfer:"PFO → Pafos 20 min; LCA → Limassol 50 min",hotel:[35,65],bike:[30,45],car:[25,50],
+ sc:[4,3,4,3,4],elev:"1 200–2 500 m/den",
+ climbs:[["Olymp (Troodos) z Limassolu","~45 km","1 900 m","4 %"],["Pafos – Kannaviou – Cedar Valley","~40 km","1 300 m","4 %"],["Platres z Trimiklini","~12 km","700 m","6 %"]],
+ pros:["Teplo jako na Kanárech, ale let jen 3–3,5 h","Troodos: stoupání až na 1 950 m","Dobré jídlo, angličtina, levnější než Kanáry"],
+ cons:["Levostranný provoz, pozor na zvyk","V lednu a únoru nejvíc deště, nahoře sníh","Užší výběr kvalitních půjčoven"],
+ tip:"Jeden z nejlepších poměrů teplo/let. Únor až duben, s bydlením v Pafu (klidnější) nebo Limassolu (blíž Troodos)."},
+
+{id:"madeira",name:"Madeira",region:"Portugalsko",known:false,best:[2,3,4],
+ wiki:["Pico do Arieiro","Madeira","Ponta de São Lourenço"],
+ terrain:["extrémně strmé","útesy"],type:["silnice","e-bike","MTB"],
+ hi:[19,19,20,20,21],lo:[13,13,14,14,16],rain:[7,6,6,4,2],sun:[5,5.5,6,6.5,7],sea:[18.5,18,18,18.5,19.5],
+ f:{PRG:{d:true,t:4.8,a:"Smartwings",p:[6000,11000]},VIE:{d:true,t:4.5,a:"Austrian, Wizz Air",p:[5000,10000]}},
+ transfer:"FNC → Funchal 20 min",hotel:[40,75],bike:[40,60],car:[30,60],
+ sc:[3,3,5,3,4],elev:"1 500–3 000 m/den",
+ climbs:[["Pico do Arieiro z Funchalu","~22 km","1 800 m","8 %"],["Encumeada z Ribeira Brava","~14 km","1 000 m","7 %"],["Paul da Serra","~20 km","1 400 m","7 %"]],
+ pros:["Dramatická příroda, nic podobného jste nejeli","Stálé jarní teploty bez extrémů","Přímý let z Prahy i Vídně"],
+ cons:["Stoupání 10–20 %, na silničku jen pro silné jezdce","Hodně tunelů a rychlostních silnic","Proměnlivé počasí, mlha nahoře"],
+ tip:"Zvažte e-silniční kola nebo kombinaci silnice + jeden den MTB/levády pěšky. Pro 5–6 lidí rozdílné výkonnosti může být e-bike řešení."},
+
+{id:"algarve",name:"Algarve",region:"Portugalsko",known:false,best:[1,2,3,4],
+ wiki:["Monchique","Algarve","Lagos, Portugal"],
+ terrain:["zvlněné","pobřeží","kopce"],type:["silnice","gravel"],
+ hi:[16,17,19,21,23],lo:[8,9,10,12,14],rain:[6,5,4,5,3],sun:[6,7,7.5,9,10.5],sea:[16,15.5,15.5,16.5,18],
+ f:{PRG:{d:false,t:6.5,a:"přes Lisabon (Smartwings nově od 10/2026) + vlak/auto 3 h, nebo s přestupem",p:[5000,9500]},VIE:{d:true,t:3.8,a:"Ryanair",p:[3500,7500]}},
+ transfer:"FAO → Lagos / Portimão 1 h",hotel:[30,60],bike:[30,50],car:[20,45],
+ sc:[4,4,3,4,3],elev:"800–1 800 m/den",
+ climbs:[["Fóia (Monchique)","~13 km","800 m","6 %"],["Alto do Malhão (Volta ao Algarve)","2,5 km","200 m","9 %"],["Serra do Caldeirão","—","zvlněné","—"]],
+ pros:["Hodně slunce, klidné vnitrozemí","Fóia a Malhão z Volta ao Algarve","Levnější než Španělsko"],
+ cons:["Z Prahy bez přímého letu","Atlantský vítr a chladnější moře","Kopce menší než na ostrovech"],
+ tip:"Pro Vídeň velmi pohodlné. Z Prahy lze nově letět do Lisabonu a v autě přejet (2,5–3 h) se zastávkou v Alentejo."},
+
+{id:"sicilie",name:"Sicílie",region:"Catania / Etna, Itálie",known:false,best:[2,3,4],
+ wiki:["Mount Etna","Taormina","Catania"],
+ terrain:["vulkán","hory","pobřeží"],type:["silnice"],
+ hi:[15,16,18,20,25],lo:[7,7,8,10,14],rain:[8,7,6,5,3],sun:[5,5.5,6.5,7.5,9.5],sea:[15,14.5,15,16,19],
+ f:{PRG:{d:"s",t:2.3,a:"Ryanair / Smartwings (spíše od jara, ověřit)",p:[3500,7500]},VIE:{d:true,t:1.9,a:"Ryanair, Austrian, Wizz Air",p:[2500,6000]}},
+ transfer:"CTA → Giardini Naxos 50 min",hotel:[30,60],bike:[35,55],car:[25,50],
+ sc:[3,3,5,3,5],elev:"1 500–2 500 m/den",
+ climbs:[["Etna – Rifugio Sapienza z Nicolosi","18 km","1 200 m","6 %"],["Etna sever z Linguaglossy","~17 km","1 200 m","7 %"],["Castelmola nad Taorminou","~5 km","450 m","9 %"]],
+ pros:["Etna: stoupání po lávových polích jako z Giro d'Italia","Italské jídlo a kafe","Nejkratší let z Vídně"],
+ cons:["Horší asfalt a chaotický provoz","V zimě deštivější a chladnější než Kanáry","Na Etně do dubna sníh a zavřené horní úseky"],
+ tip:"Nejlépe duben–květen. Bydlet na pobřeží u Taorminy a vyjíždět na Etnu a do pohoří Nebrodi."},
+
+{id:"kreta",name:"Kréta",region:"Chania / Heraklion, Řecko",known:false,best:[3,4],
+ wiki:["Chania","Lasithi Plateau","Samaria Gorge"],
+ terrain:["hory","soutěsky","pobřeží"],type:["silnice","gravel"],
+ hi:[16,16,18,21,25],lo:[9,9,10,12,16],rain:[12,10,8,5,2],sun:[4.5,5.5,7,9,11],sea:[17,16,16.5,17.5,20],
+ f:{PRG:{d:"s",t:2.8,a:"Smartwings (charter od dubna/května)",p:[5000,9000]},VIE:{d:"s",t:2.5,a:"Austrian, Aegean (od konce března), v zimě přes Atény",p:[4000,8500]}},
+ transfer:"CHQ → Chania 20 min; HER → Hersonissos 30 min",hotel:[30,55],bike:[30,45],car:[20,45],
+ sc:[3,4,4,2,4],elev:"1 200–2 500 m/den",
+ climbs:[["Omalos z Chanie","~38 km","1 100 m","3 %"],["Plošina Lasithi","~25 km","850 m","4 %"],["Imbros / Askifou","~20 km","750 m","4 %"]],
+ pros:["Dlouhé horské silnice skoro bez aut","Krásná příroda a soutěsky","Levné ubytování a jídlo"],
+ cons:["Leden až březen deštivé, málo letů","Méně specializovaných půjčoven","Prašné a místy rozbité okresky"],
+ tip:"Smysl dává až od poloviny dubna; v květnu výborné a stále ne horko."},
+
+{id:"antalya",name:"Antalya",region:"Turecká riviéra",known:false,best:[2,3,4],
+ wiki:["Antalya","Taurus Mountains","Kemer"],
+ terrain:["hory","pobřeží","rovinky"],type:["silnice","gravel"],
+ hi:[15,16,19,22,26],lo:[6,7,9,12,16],rain:[10,8,6,4,3],sun:[5.5,6.5,7.5,9,11],sea:[18,17,17,18,21],
+ f:{PRG:{d:true,t:2.8,a:"Smartwings, Turkish, Pegasus, SunExpress",p:[4000,8000]},VIE:{d:true,t:2.6,a:"Austrian, Pegasus, SunExpress, Turkish",p:[3500,7500]}},
+ transfer:"AYT → Belek / Side 30–60 min; → Kemer 50 min",hotel:[30,60],bike:[25,40],car:[15,35],
+ sc:[4,3,4,4,3],elev:"1 000–2 500 m/den",
+ climbs:[["Saklıkent (lyžařské středisko)","~40 km","1 800 m","4,5 %"],["Termessos / Güllük Dağı","~12 km","800 m","6 %"],["Kemer – Ovacık","~20 km","1 000 m","5 %"]],
+ pros:["Levné all-inclusive hotely s cyklistickým zázemím (cyklokempy týmů)","Přímé lety každý den z obou letišť","Pohoří Taurus kousek od moře"],
+ cons:["V lednu a únoru spíš deštivo","Rušnější silnice kolem měst","Méně romantická krajina na pobřeží (resorty)"],
+ tip:"Nejlevnější varianta; v březnu–dubnu sem jezdí profesionální týmy. Hledejte hotely v Belek / Side s nabídkou kol."},
+
+{id:"marrakes",name:"Marrákeš a Atlas",region:"Maroko",known:false,best:[1,2,3],
+ wiki:["High Atlas","Marrakesh","Ourika Valley"],
+ terrain:["velehory","pouštní pláně"],type:["silnice","gravel","MTB"],
+ hi:[19,21,24,26,29],lo:[6,8,10,12,15],rain:[4,4,4,4,2],sun:[7,8,8.5,9.5,10],sea:[null,null,null,null,null],
+ f:{PRG:{d:"s",t:4,a:"Ryanair / Smartwings (ověřit), jinak s přestupem",p:[4500,9000]},VIE:{d:true,t:4,a:"Ryanair, Austrian",p:[4000,8500]}},
+ transfer:"RAK → Marrákeš 15 min, → Ourika 1 h",hotel:[25,55],bike:[35,55],car:[25,60],
+ sc:[3,3,5,2,5],elev:"1 500–3 000 m/den",
+ climbs:[["Oukaïmeden z Ourika","~30 km","1 700 m","6 %"],["Tizi n'Tichka","~60 km","1 600 m","3 %"],["Tizi n'Test","~40 km","1 500 m","4 %"]],
+ pros:["Nejvíc slunce a sucha, opravdové dobrodružství","Sedla přes 2 000 m n. m., velkolepé scenérie","Levné ubytování v riadech"],
+ cons:["Méně kvalitních silničních kol k půjčení, zvažte gravel","Chaotická doprava kolem Marrákeše","Studené noci (5–8 °C) a sníh v Atlasu"],
+ tip:"Nejlépe přes agenturu se supportem a přesuny. Pro 5–6 lidí lze najmout doprovodné vozidlo za rozumnou cenu."},
+
+{id:"toskansko",name:"Toskánsko",region:"Siena / Val d'Orcia, Itálie",known:false,best:[3,4],
+ wiki:["Val d'Orcia","Strade Bianche","Montalcino"],
+ terrain:["zvlněné","bílé silnice","vinice"],type:["silnice","gravel"],
+ hi:[11,13,16,19,24],lo:[2,3,5,8,12],rain:[8,7,8,9,8],sun:[3.5,4.5,5.5,6.5,8],sea:[13.5,13,13.5,15,18],
+ f:{PRG:{d:"s",t:1.7,a:"Ryanair do Pisy (ověřit), přes Řím; nebo autem ~9 h s vlastními koly",p:[3000,6500]},VIE:{d:true,t:1.4,a:"Austrian (Florencie), Ryanair (Bologna, Pisa)",p:[2500,6000]}},
+ transfer:"FLR → Siena 1 h 15; PSA → Siena 1 h 45",hotel:[40,80],bike:[40,60],car:[25,55],
+ sc:[4,4,3,4,5],elev:"1 200–2 000 m/den",
+ climbs:[["Montalcino","~8 km","400 m","5 %"],["Monte Amiata","~20 km","1 100 m","5 %"],["Strade Bianche sektory (Monte Sante Marie)","11,5 km","šotolina","—"]],
+ pros:["Nejkrásnější krajina na kolo v Evropě","Gravel i silnice, víno a jídlo","Krátký let, nebo se dá dojet autem i s vlastními koly"],
+ cons:["Teplo až od konce dubna","V březnu chladno a deštivo","Ubytování v agroturistice dražší"],
+ tip:"Termín na přelomu dubna a května. Agroturistika pro 6 lidí v Val d'Orcia, Strade Bianche na gravelu."}
+];
+
+/* ---------- state ---------- */
+const S={m:1,ap:"ALL",n:5,direct:false,hideKnown:false,sort:"idx",tab:"lokality",cmp:["costablanca","kypr","antalya"],metric:"idx",lcOff:{},tblSort:{k:"idx",dir:-1}};
+try{const s=JSON.parse(localStorage.getItem("zk27")||"{}");Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem("zk27",JSON.stringify({m:S.m,ap:S.ap,n:S.n,direct:S.direct,hideKnown:S.hideKnown,sort:S.sort,cmp:S.cmp,metric:S.metric}))}catch(e){}};
+const $=s=>document.querySelector(s), byId=id=>LOC.find(l=>l.id===id);
+
+/* ---------- calculations ---------- */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function idx(l,m){const t=l.hi[m];let ts=t<18?clamp((t-10)/8,0,1):t>25?clamp(1-(t-25)/8,0,1):1;
+  const rs=clamp(1-l.rain[m]/12,0,1), ss=clamp(l.sun[m]/10,0,1); return Math.round(100*(.5*ts+.3*rs+.2*ss));}
+function flights(l){return S.ap==="ALL"?["PRG","VIE"].map(k=>[k,l.f[k]]):[[S.ap,l.f[S.ap]]];}
+function bestFlight(l){const fs=flights(l).filter(([,f])=>!S.direct||f.d===true||f.d==="s");
+  return fs.sort((a,b)=>a[1].t-b[1].t)[0]||null;}
+function cost(l){const fs=flights(l).map(x=>x[1]);const fl=[Math.min(...fs.map(f=>f.p[0])),Math.min(...fs.map(f=>f.p[1]))];
+  const n=S.n, eur=a=>a*EUR;
+  return [Math.round((fl[0]+eur(l.hotel[0]*n+l.bike[0]*n+l.car[0]))/500)*500, Math.round((fl[1]+eur(l.hotel[1]*n+l.bike[1]*n+l.car[1]))/500)*500];}
+const fmtK=n=>(n/1000).toLocaleString("cs-CZ",{maximumFractionDigits:1})+" tis.";
+const fmtH=t=>{const h=Math.floor(t),m=Math.round((t-h)*60);return m?`${h} h ${String(m).padStart(2,"0")}`:`${h} h`;};
+const dirTxt=d=>d===true?["přímý","y"]:d==="s"?["přímý sezónně / ověřit","s"]:["s přestupem","n"];
+const hillScore=l=>l.sc[2];
+
+/* ---------- colors (explicit, readable with dark text in both themes) ---------- */
+function lerp(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t));}
+function ramp(stops,t){t=clamp(t,0,1);const n=stops.length-1,i=Math.min(n-1,Math.floor(t*n));return `rgb(${lerp(stops[i],stops[i+1],t*n-i).join(",")})`;}
+const R={temp:[[173,205,232],[214,232,214],[249,226,140],[246,170,110]],
+         good:[[240,190,175],[246,225,150],[200,230,170],[130,205,150]],
+         rain:[[245,240,225],[190,220,240],[120,170,225]],
+         sun:[[215,215,215],[250,230,150],[250,190,90]],
+         sea:[[175,205,235],[160,225,220],[150,225,190]]};
+const METRICS={
+  idx:{lbl:"Index počasí",get:(l,m)=>idx(l,m),fmt:v=>v,col:v=>ramp(R.good,(v-35)/60),leg:["horší","lepší"],r:R.good},
+  hi:{lbl:"Max °C",get:(l,m)=>l.hi[m],fmt:v=>v+"°",col:v=>ramp(R.temp,(v-10)/18),leg:["10 °C","28 °C"],r:R.temp},
+  lo:{lbl:"Min °C",get:(l,m)=>l.lo[m],fmt:v=>v+"°",col:v=>ramp(R.temp,(v-1)/17),leg:["1 °C","18 °C"],r:R.temp},
+  rain:{lbl:"Deštivé dny",get:(l,m)=>l.rain[m],fmt:v=>String(v).replace(".",","),col:v=>ramp(R.rain,v/12),leg:["0 dní","12 dní"],r:R.rain},
+  sun:{lbl:"Slunce h/den",get:(l,m)=>l.sun[m],fmt:v=>String(v).replace(".",","),col:v=>ramp(R.sun,(v-3)/8),leg:["3 h","11 h"],r:R.sun},
+  sea:{lbl:"Moře °C",get:(l,m)=>l.sea[m],fmt:v=>v==null?"–":String(v).replace(".",",")+"°",col:v=>v==null?"#e4e4e4":ramp(R.sea,(v-12.5)/9),leg:["13 °C","21 °C"],r:R.sea}};
+const CAT=["#d4561e","#2c7fb8","#2f9e5b","#8e44ad","#c99a06","#d6337a","#1b9e9e","#6b5b3e","#5767d6","#a0522d","#4d8f2a","#b8336a","#3f7f99","#c2611f","#7a4fb5","#258a6a"];
+
+/* ---------- photos from Wikipedia (works on GitHub Pages; falls back to drawn landscape) ---------- */
+const imgCache={};
+function wikiImg(title){
+  if(imgCache[title]) return imgCache[title];
+  let cached=null;try{cached=JSON.parse(localStorage.getItem("zk27img:"+title)||"null")}catch(e){}
+  if(cached) return imgCache[title]=Promise.resolve(cached);
+  return imgCache[title]=fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(title.replace(/ /g,"_")))
+    .then(r=>r.ok?r.json():null).then(j=>{if(!j||!(j.thumbnail||j.originalimage))return null;
+      let src=(j.thumbnail||j.originalimage).source; if(/\/\d+px-/.test(src)) src=src.replace(/\/\d+px-/,"/960px-");
+      const o={src,page:j.content_urls&&j.content_urls.desktop.page,title:j.title};
+      try{localStorage.setItem("zk27img:"+title,JSON.stringify(o))}catch(e){} return o;}).catch(()=>null);
+}
+function fallbackSVG(l,k){
+  const h=(LOC.indexOf(l)*37+k*23)%360, s=l.sea[0]==null?"desert":"sea";
+  const pts=[];let y=60;for(let x=0;x<=320;x+=20){y=clamp(y+((Math.sin((x+LOC.indexOf(l)*31+k*50)/23)*18)|0),25,100);pts.push(x+" "+y)}
+  return `<svg class="fb" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs><linearGradient id="g${l.id}${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${h},55%,78%)"/><stop offset="1" stop-color="hsl(${(h+30)%360},60%,88%)"/></linearGradient></defs>
+  <rect width="320" height="180" fill="url(#g${l.id}${k})"/><circle cx="250" cy="45" r="18" fill="hsl(40,95%,70%)"/>
+  <path d="M0 180 L${pts.join(" L")} L320 180Z" fill="hsl(${(h+150)%360},25%,42%)"/>
+  <path d="M0 180 L0 140 Q80 120 160 138 T320 132 L320 180Z" fill="${s==="sea"?"hsl(205,55%,45%)":"hsl(30,45%,55%)"}"/>
+  <text x="14" y="168" font-family="Barlow Condensed,sans-serif" font-size="15" font-weight="700" fill="#fff" opacity=".85">${l.wiki[k]||l.name}</text></svg>`;
+}
+function photo(el,l,k){
+  el.innerHTML=fallbackSVG(l,k)+(el.dataset.tags||"");
+  wikiImg(l.wiki[k]).then(o=>{if(!o)return;const img=new Image();img.alt=o.title;img.loading="lazy";
+    img.onload=()=>{el.querySelector(".fb")?.remove();el.prepend(img);
+      const a=document.createElement("a");a.className="credit";a.href=o.page||"#";a.target="_blank";a.rel="noopener";a.textContent="Wikimedia · "+o.title;el.append(a)};
+    img.src=o.src;});
+}
+
+/* ---------- render: controls ---------- */
+function renderControls(){
+  $("#monthSeg").innerHTML=MS.map((m,i)=>`<button data-m="${i}" aria-pressed="${i===S.m}" title="${MONTHS[i]}">${m}</button>`).join("");
+  document.querySelectorAll("#apSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ap===S.ap));
+  document.querySelectorAll("#nSeg button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.n===S.n));
+  $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;$("#sortSel").value=S.sort;
+  $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
+  ["lokality","pocasi","srovnani","tabulka"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
+  $("#cmpN").textContent=S.cmp.length;
+}
+function visible(){
+  let L=LOC.filter(l=>!(S.hideKnown&&l.known)).filter(l=>!S.direct||bestFlight(l));
+  const m=S.m,k={idx:l=>-idx(l,m),hi:l=>-l.hi[m],rain:l=>l.rain[m],sun:l=>-l.sun[m],flight:l=>(bestFlight(l)||flights(l)[0])[1].t,
+    price:l=>cost(l)[0],hills:l=>-hillScore(l)-l.hi[m]/100,name:l=>l.name}[S.sort];
+  return L.sort((a,b)=>{const x=k(a),y=k(b);return typeof x==="string"?x.localeCompare(y,"cs"):x-y});
+}
+function renderPick(){
+  const top=LOC.filter(l=>!l.known).filter(l=>!S.direct||bestFlight(l)).sort((a,b)=>idx(b,S.m)-idx(a,S.m)).slice(0,3);
+  $("#pick").innerHTML=`<b>${MONTHS[S.m]}:</b> <span>nejlepší počasí z nových lokalit mají</span> ${top.map(l=>`<a data-open="${l.id}">${l.name}</a> <span style="color:var(--muted)">(${idx(l,S.m)})</span>`).join(", ")}`;
+}
+function idxBox(l){const v=idx(l,S.m);return `<div class="idx" style="background:${METRICS.idx.col(v)}" title="Index počasí pro ${MONTHS[S.m].toLowerCase()} (0–100)"><b>${v}</b><small>index</small></div>`;}
+function flightLines(l){return flights(l).map(([k,f])=>{const [t,c]=dirTxt(f.d);return `<div><b>${k==="PRG"?"Praha":"Vídeň"}</b> ${fmtH(f.t)} · <span class="dir ${c}">${t}</span></div>`}).join("");}
+
+/* ---------- render: cards ---------- */
+function renderGrid(){
+  const L=visible(), m=S.m;
+  $("#grid").innerHTML=L.length?L.map(l=>{const c=cost(l),inC=S.cmp.includes(l.id);
+    const tags=`<div class="tagrow">${l.known?'<span class="badge known">Už jsme byli</span>':''}${l.best.includes(m)?'<span class="badge best">Ideální měsíc</span>':''}</div>`;
+    return `<article class="card">
+    <div class="ph" data-ph="${l.id}" data-tags='${tags}'></div>
+    <div class="cbody">
+      <div class="ctitle"><div><h3>${l.name}</h3><div class="sub">${l.region}</div></div>${idxBox(l)}</div>
+      <div class="wx">
+        <div><b>${l.hi[m]}°</b><small>max</small></div><div><b>${l.lo[m]}°</b><small>min</small></div>
+        <div><b>${String(l.rain[m]).replace(".",",")}</b><small>dny deště</small></div><div><b>${String(l.sun[m]).replace(".",",")}</b><small>h slunce</small></div>
+      </div>
+      <dl class="facts">
+        <dt>Let</dt><dd>${flightLines(l)}</dd>
+        <dt>Cena</dt><dd><b>${fmtK(c[0])}–${fmtK(c[1])} Kč</b> / os. za ${S.n} nocí</dd>
+        <dt>Terén</dt><dd><div class="terrain">${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></dd>
+      </dl>
+      <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div>
+        <div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
+      <div class="cfoot"><button class="btn pri" data-open="${l.id}">Detail</button>
+        <button class="btn" data-cmp="${l.id}" aria-pressed="${inC}">${inC?"✓ V porovnání":"+ Porovnat"}</button></div>
+    </div></article>`}).join(""):`<div class="empty">Žádná lokalita neodpovídá filtrům. Zkus vypnout „jen přímé lety“.</div>`;
+  document.querySelectorAll("#grid .ph").forEach(el=>photo(el,byId(el.dataset.ph),0));
+}
+
+/* ---------- render: heatmap + line chart ---------- */
+function renderHeat(){
+  const M=METRICS[S.metric], L=visible();
+  $("#hm").innerHTML=`<thead><tr><th></th>${MS.map((m,i)=>`<th class="${i===S.m?"cur":""}">${m}</th>`).join("")}</tr></thead><tbody>${
+    L.map(l=>`<tr><th class="loc"><a data-open="${l.id}" style="cursor:pointer">${l.name}</a> ${l.known?"<small>· byli jsme</small>":""}</th>${
+      MS.map((_,i)=>{const v=M.get(l,i);return `<td class="${i===S.m?"cur":""}" style="background:${M.col(v)}">${M.fmt(v)}</td>`}).join("")}</tr>`).join("")}</tbody>`;
+  $("#hmLegend").innerHTML=`<span>${M.leg[0]}</span><span class="bar" style="background:linear-gradient(90deg,${M.r.map(c=>`rgb(${c})`).join(",")})"></span><span>${M.leg[1]}</span><span>· rámeček = zvolený měsíc</span>`;
+}
+function renderLine(){
+  const L=visible(), W=760,H=340,pl=40,pr=16,pt=14,pb=34, x=i=>pl+i*(W-pl-pr)/4, y=v=>pt+(30-v)*(H-pt-pb)/30;
+  const on=l=>S.lcOff[l.id]===undefined?S.cmp.includes(l.id)||S.cmp.length===0&&!l.known:!S.lcOff[l.id];
+  let g=`<g class="grid">`;for(let v=0;v<=30;v+=5)g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end">${v}°</text>`;
+  g+=`</g>`+MS.map((m,i)=>`<text x="${x(i)}" y="${H-10}" text-anchor="middle" style="${i===S.m?"fill:var(--accent);font-weight:600":""}">${m}</text>`).join("");
+  g+=`<rect x="${x(S.m)-22}" y="${pt}" width="44" height="${H-pt-pb}" fill="var(--accent)" opacity=".08"/>`;
+  L.forEach(l=>{if(!on(l))return;const c=CAT[LOC.indexOf(l)%CAT.length];
+    g+=`<polyline points="${l.lo.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="${c}" stroke-width="1.5" stroke-dasharray="3 4" opacity=".8"/>`;
+    g+=`<polyline points="${l.hi.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="${c}" stroke-width="2.5"/>`;
+    g+=l.hi.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="${i===S.m?4.5:2.5}" fill="${c}"><title>${l.name} ${MONTHS[i]}: ${v}° / ${l.lo[i]}°</title></circle>`).join("");
+    g+=`<text x="${x(4)+6}" y="${y(l.hi[4])+4}" style="fill:${c};font-weight:600;font-size:11px" text-anchor="start"></text>`;});
+  $("#lc").innerHTML=g;
+  $("#lcleg").innerHTML=L.map(l=>`<button data-lc="${l.id}" aria-pressed="${on(l)}"><i style="background:${CAT[LOC.indexOf(l)%CAT.length]}"></i>${l.name}</button>`).join("");
+}
+
+/* ---------- render: compare ---------- */
+function bars(n){return `<span class="bars" title="${n}/5">${[1,2,3,4,5].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("")}</span>`;}
+function renderCmp(){
+  const L=S.cmp.map(byId).filter(Boolean), m=S.m;
+  if(!L.length){$("#cmpWrap").innerHTML=`<div class="empty">Zatím nic k porovnání. Na kartách klikni na <b>+ Porovnat</b> (max. 4 lokality).</div>`;return;}
+  const best=(f,dir)=>{const v=L.map(f);const b=dir>0?Math.max(...v):Math.min(...v);return v.map(x=>x===b&&L.length>1);};
+  const rows=[
+    ["",l=>`<div class="head">${l.name}<small>${l.region}</small></div><div style="margin-top:8px;display:flex;gap:6px"><button class="btn" data-open="${l.id}">Detail</button><button class="btn" data-cmp="${l.id}">Odebrat</button></div>`],
+    ["Index počasí · "+MONTHS[m].toLowerCase(),l=>`<b style="font:700 24px var(--f-display)">${idx(l,m)}</b> / 100`,best(l=>idx(l,m),1)],
+    ["Teplota max / min",l=>`<b>${l.hi[m]}°</b> / ${l.lo[m]}°`,best(l=>l.hi[m],1)],
+    ["Deštivé dny",l=>String(l.rain[m]).replace(".",","),best(l=>l.rain[m],-1)],
+    ["Slunce h/den",l=>String(l.sun[m]).replace(".",","),best(l=>l.sun[m],1)],
+    ["Moře",l=>METRICS.sea.fmt(l.sea[m])],
+    ["Teploty leden → květen",l=>`<span style="font-size:13px">${l.hi.join("° · ")}°</span>`],
+    ["Let",l=>flightLines(l)+`<div style="font-size:12.5px;color:var(--muted);margin-top:4px">${flights(l).map(([k,f])=>k+": "+f.a).join("<br>")}</div>`,best(l=>(bestFlight(l)||flights(l)[0])[1].t,-1)],
+    ["Transfer",l=>l.transfer],
+    [`Odhad ceny / os. (${S.n} nocí)`,l=>{const c=cost(l);return `<b>${fmtK(c[0])}–${fmtK(c[1])} Kč</b>`},best(l=>cost(l)[0],-1)],
+    ["Ubytování · kolo",l=>`${l.hotel[0]}–${l.hotel[1]} €/noc · ${l.bike[0]}–${l.bike[1]} €/den`],
+    ["Silnice",l=>bars(l.sc[0]),best(l=>l.sc[0],1)],["Klid na silnicích",l=>bars(l.sc[1]),best(l=>l.sc[1],1)],
+    ["Kopce",l=>bars(l.sc[2])+` <span style="font-size:12.5px;color:var(--muted)">${l.elev}</span>`,best(l=>l.sc[2],1)],
+    ["Cyklo zázemí",l=>bars(l.sc[3]),best(l=>l.sc[3],1)],["Rozmanitost",l=>bars(l.sc[4]),best(l=>l.sc[4],1)],
+    ["Nejlepší měsíce",l=>l.best.map(i=>MS[i]).join(", ")],
+    ["Výhody",l=>`<ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul>`],
+    ["Nevýhody",l=>`<ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul>`]];
+  $("#cmpWrap").innerHTML=`<div class="scroll"><div class="cmp" style="grid-template-columns:minmax(120px,170px) repeat(${L.length},minmax(200px,1fr));min-width:${170+L.length*200}px">${
+    rows.map(([h,f,w])=>`<div class="row"><div class="cell rh">${h}</div>${L.map((l,i)=>`<div class="cell ${w&&w[i]?"win":""}">${f(l)}</div>`).join("")}</div>`).join("")}</div></div>
+    <p class="hint" style="color:var(--muted);font-size:13px;margin-top:10px">Zeleně je nejlepší hodnota v řádku. Měsíc a letiště měníš nahoře.</p>`;
+}
+
+/* ---------- render: table ---------- */
+function renderTable(){
+  const m=S.m, cols=[["name","Lokalita",l=>l.name,l=>`<a data-open="${l.id}">${l.name}</a>${l.known?' <span style="color:var(--muted)">· byli</span>':""}`],
+    ["idx","Index",l=>idx(l,m)],["hi","Max °C",l=>l.hi[m]],["lo","Min °C",l=>l.lo[m]],["rain","Déšť dny",l=>l.rain[m]],["sun","Slunce h",l=>l.sun[m]],
+    ["sea","Moře °C",l=>l.sea[m]??-1,l=>METRICS.sea.fmt(l.sea[m])],
+    ["fl","Let",l=>(bestFlight(l)||flights(l)[0])[1].t,l=>{const [k,f]=bestFlight(l)||flights(l)[0];return `${fmtH(f.t)} <span class="dir ${dirTxt(f.d)[1]}" title="${dirTxt(f.d)[0]}">${k}</span>`}],
+    ["price","Cena od (Kč)",l=>cost(l)[0],l=>{const c=cost(l);return fmtK(c[0])+"–"+fmtK(c[1])}],
+    ["hills","Kopce",l=>l.sc[2],l=>bars(l.sc[2])],["roads","Silnice",l=>l.sc[0],l=>bars(l.sc[0])]];
+  const ts=S.tblSort,col=cols.find(c=>c[0]===ts.k)||cols[1];
+  const L=visible().sort((a,b)=>{const x=col[2](a),y=col[2](b);return (typeof x==="string"?x.localeCompare(y,"cs"):x-y)*ts.dir});
+  $("#tbl").innerHTML=`<thead><tr>${cols.map(c=>`<th data-sort="${c[0]}" class="${c[0]==="name"?"":"num"}" aria-sort="${c[0]===ts.k?(ts.dir>0?"ascending":"descending"):"none"}">${c[1]}</th>`).join("")}</tr></thead>
+  <tbody>${L.map(l=>`<tr>${cols.map(c=>`<td class="${c[0]==="name"?"":"num"}">${c[3]?c[3](l):String(c[2](l)).replace(".",",")}</td>`).join("")}</tr>`).join("")}</tbody>`;
+}
+
+/* ---------- detail dialog ---------- */
+function openDetail(id){
+  const l=byId(id),m=S.m,c=cost(l),inC=S.cmp.includes(l.id);
+  const q=encodeURIComponent(l.name+" cycling");
+  const spark=(()=>{const W=300,H=90,x=i=>20+i*65,y=v=>80-(v-0)*70/30;
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;height:auto"><polyline points="${l.hi.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <polyline points="${l.lo.map((v,i)=>x(i)+","+y(v)).join(" ")}" fill="none" stroke="var(--road)" stroke-width="1.5" stroke-dasharray="3 4"/>
+    ${l.hi.map((v,i)=>`<text x="${x(i)}" y="${y(v)-7}" text-anchor="middle" style="fill:var(--ink);font:600 12px var(--f-body)">${v}°</text><text x="${x(i)}" y="${H-1}" text-anchor="middle" style="fill:${i===m?"var(--accent)":"var(--muted)"};font:11px var(--f-body)">${MS[i]}</text>`).join("")}</svg>`})();
+  $("#dlgBody").innerHTML=`<div class="gal">${l.wiki.map((_,k)=>`<div class="ph" data-k="${k}"></div>`).join("")}</div>
+  <div class="dbody">
+    <div class="ctitle"><div><div class="eyebrow">${l.region}${l.known?" · už jsme byli":""}</div><h2>${l.name}</h2>
+      <div class="terrain" style="margin-top:8px">${l.type.map(t=>`<span class="chip">${t}</span>`).join("")}${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></div>${idxBox(l)}</div>
+    <div class="tip">${l.tip}</div>
+    <div class="two">
+      <div><div class="eyebrow" style="margin-bottom:6px">Teploty max / min po měsících</div>${spark}
+        <div class="scroll"><table class="climbs" style="margin-top:6px"><tr><td></td>${MS.map((x,i)=>`<td class="num" style="${i===m?"color:var(--accent);font-weight:600":""}">${x}</td>`).join("")}</tr>
+        <tr><td>Déšť (dny)</td>${l.rain.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
+        <tr><td>Slunce (h)</td>${l.sun.map(v=>`<td class="num">${String(v).replace(".",",")}</td>`).join("")}</tr>
+        <tr><td>Moře</td>${l.sea.map(v=>`<td class="num">${METRICS.sea.fmt(v)}</td>`).join("")}</tr></table></div></div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Klasická stoupání · ${l.elev}</div>
+        <table class="climbs">${l.climbs.map(c=>`<tr><td>${c[0]}</td><td class="num">${c[1]}</td><td class="num">${c[2]}</td><td class="num">${c[3]}</td></tr>`).join("")}</table></div>
+    </div>
+    <div class="two">
+      <div><div class="eyebrow" style="margin-bottom:6px">Doprava</div>
+        ${["PRG","VIE"].map(k=>{const f=l.f[k],[t,cl]=dirTxt(f.d);return `<p style="margin:0 0 8px"><b>${k==="PRG"?"Praha":"Vídeň"}:</b> ${fmtH(f.t)}${f.d===false?" celkem":""} · <span class="dir ${cl}">${t}</span><br><span style="color:var(--muted);font-size:13.5px">${f.a} · letenka ${fmtK(f.p[0])}–${fmtK(f.p[1])} Kč</span></p>`}).join("")}
+        <p style="margin:0"><b>Transfer:</b> ${l.transfer}</p></div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Odhad ceny na osobu · ${S.n} nocí · ${S.ap==="ALL"?"levnější letiště":S.ap}</div>
+        <p style="margin:0 0 6px;font:700 28px var(--f-display)">${fmtK(c[0])} – ${fmtK(c[1])} Kč</p>
+        <p style="margin:0;font-size:13.5px;color:var(--muted)">Ubytování ${l.hotel[0]}–${l.hotel[1]} €/noc · karbonové silniční kolo ${l.bike[0]}–${l.bike[1]} €/den · auto/transfer ${l.car[0]}–${l.car[1]} €/os.</p></div>
+    </div>
+    <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div><div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
+    <div class="links">
+      <button class="btn ${inC?"":"pri"}" data-cmp="${l.id}" aria-pressed="${inC}">${inC?"✓ V porovnání":"+ Porovnat"}</button>
+      <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Prague to "+l.name)}" target="_blank" rel="noopener">Lety z Prahy ↗</a>
+      <a href="https://www.google.com/travel/flights?q=${encodeURIComponent("flights from Vienna to "+l.name)}" target="_blank" rel="noopener">Lety z Vídně ↗</a>
+      <a href="https://www.google.com/search?tbm=isch&q=${q}" target="_blank" rel="noopener">Další fotky ↗</a>
+      <a href="https://www.strava.com/search?q=${encodeURIComponent(l.name)}" target="_blank" rel="noopener">Strava ↗</a>
+      <a href="https://www.climbfinder.com/en/search?q=${encodeURIComponent(l.name)}" target="_blank" rel="noopener">Climbfinder ↗</a>
+    </div>
+  </div>`;
+  $("#dlgBody").querySelectorAll(".gal .ph").forEach(el=>photo(el,l,+el.dataset.k));
+  const d=$("#dlg"); if(!d.open) d.showModal(); d.scrollTop=0;
+}
+
+/* ---------- wiring ---------- */
+function render(){renderControls();renderPick();
+  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else renderTable();save();}
+function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
+document.addEventListener("click",e=>{const t=e.target.closest("button,a");if(!t)return;
+  if(t.dataset.m!==undefined){S.m=+t.dataset.m;render()}
+  else if(t.dataset.ap){S.ap=t.dataset.ap;render()}
+  else if(t.dataset.n){S.n=+t.dataset.n;render()}
+  else if(t.dataset.metric){S.metric=t.dataset.metric;render()}
+  else if(t.dataset.tab){S.tab=t.dataset.tab;try{history.replaceState(null,"","#"+S.tab)}catch(e){}render()}
+  else if(t.dataset.open){e.preventDefault();openDetail(t.dataset.open)}
+  else if(t.dataset.cmp){toggleCmp(t.dataset.cmp);const d=$("#dlg");if(d.open)openDetail(t.dataset.cmp);render()}
+  else if(t.dataset.lc){const l=byId(t.dataset.lc);S.lcOff[l.id]=t.getAttribute("aria-pressed")==="true";renderLine()}
+  else if(t.id==="dlgX"){$("#dlg").close()}});
+document.addEventListener("click",e=>{const th=e.target.closest("th[data-sort]");if(!th)return;const k=th.dataset.sort;
+  S.tblSort=S.tblSort.k===k?{k,dir:-S.tblSort.dir}:{k,dir:k==="name"||k==="rain"||k==="fl"||k==="price"?1:-1};renderTable()});
+$("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()});
+$("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
+$("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
+$("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
+const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka"].includes(h))S.tab=h;
+render();
+</script>
+</body>
+</html>
