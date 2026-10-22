@@ -1,5 +1,6 @@
-// Stáhne z Open-Meteo (archiv ERA5) vítr pro základnu každé lokality a uloží měsíční průměry leden–květen
-// do wind.json v kořeni repozitáře. Základna = první bod první trasy v ROUTES (data.js).
+// Stáhne z Open-Meteo (archiv ERA5) vítr pro základnu každé lokality a zapíše měsíční průměry leden–květen
+// do konstanty WIND v data.js (blok mezi značkami WIND:start a WIND:end, při prvním běhu se přidá na konec).
+// Základna = první bod první trasy v ROUTES (data.js). Po přidání lokality skript spusť znovu.
 //
 // Spuštění (Node 18 nebo novější, žádné balíčky; potřebuje přístup na archive-api.open-meteo.com):
 //   node tools/fetch-wind.mjs
@@ -52,6 +53,23 @@ for (const l of LOC) {
   await sleep(800); // šetrně k bezplatnému API
 }
 
-const meta = { zdroj: 'Open-Meteo Historical Weather API (ERA5)', obdobi: `${Y0}–${Y1}, leden–květen`, w: 'průměrná rychlost větru v 10 m, 9–17 h, km/h', wd: `dní v měsíci s denním průměrem ≥ ${WINDY} km/h`, stazeno: new Date().toISOString().slice(0, 10) };
-fs.writeFileSync(path.join(root, 'wind.json'), JSON.stringify({ meta, data: out }, null, 1));
-console.log(`\nHotovo: ${Object.keys(out).length} z ${LOC.length} lokalit uloženo do wind.json`);
+const ORDER = LOC.map((l) => l.id).filter((id) => out[id]);
+const prevFile = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+const START = '/* WIND:start */', END = '/* WIND:end */';
+// lokality, které se teď nepodařilo stáhnout, si ponechají předchozí hodnoty
+let prev = {};
+if (prevFile.includes(START)) { const c = {}; vm.createContext(c); vm.runInContext(prevFile + '\nthis.WIND=WIND;', c); prev = c.WIND; }
+const all = LOC.map((l) => l.id).filter((id) => out[id] || prev[id]);
+const row = (id) => { const o = out[id] || prev[id]; return ` ${id}:{w:${JSON.stringify(o.w)},wd:${JSON.stringify(o.wd)},at:${JSON.stringify(o.at)}}`; };
+const block = `${START}
+/* Vítr: Open-Meteo Historical Weather API (reanalýza ERA5), ${Y0}–${Y1}, bod u základny lokality (at).
+   w = průměrná rychlost větru v 10 m přes den (9–17 h), km/h; wd = průměrný počet dní v měsíci s denním průměrem ≥ ${WINDY} km/h.
+   Generuje tools/fetch-wind.mjs (staženo ${new Date().toISOString().slice(0, 10)}), ručně neupravovat. */
+const WIND={
+${all.map(row).join(',\n')}};
+${END}`;
+const next = prevFile.includes(START)
+  ? prevFile.slice(0, prevFile.indexOf(START)) + block + prevFile.slice(prevFile.indexOf(END) + END.length)
+  : prevFile.replace(/\s*$/, '\n\n') + block + '\n';
+fs.writeFileSync(path.join(root, 'data.js'), next);
+console.log(`\nHotovo: ${ORDER.length} z ${LOC.length} lokalit staženo, WIND v data.js má ${all.length} lokalit`);

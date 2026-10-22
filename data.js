@@ -2,6 +2,7 @@
    Načítá se z index.html před hlavním skriptem; konstanty jsou globální. */
 /* ---------- zdroje (klíč → popis a odkaz) ---------- */
 const SRC={
+ om_wind:{t:"Open-Meteo Historical Weather API: vítr z reanalýzy ERA5, 2016–2025",u:"https://open-meteo.com/en/docs/historical-weather-api"},
  e15:{t:"e15.cz: Smartwings škrtá lety z Prahy (9/2026)",u:"https://www.e15.cz/byznys/doprava-a-logistika/smartwings-skrta-lety-z-prahy-nejvic-do-oblibene-podzimni-destinace-cechu-1436068"},
  cl_pmi:{t:"cestujlevne.com: Mallorka z Prahy se Smartwings v zimě",u:"https://www.cestujlevne.com/akcni-letenky/mallorka-z-prahy-se-smartwings-behem-zimy"},
  avd:{t:"aviation.direct: zimní řád Ryanair v Rakousku 2026/27",u:"https://aviation.direct/noch-nicht-ab-linz-ryanair-winterflugplan-an-oesterreich-nimmt-form-an"},
@@ -918,3 +919,31 @@ const GEO={mallorca:[39.75,2.95,"r"],tenerife:[28.27,-16.6,[-6,28,"end"]],granca
 /* transfer z letiště na základnu v hodinách */
 const TR={mallorca:.75,tenerife:.25,grancanaria:.5,lanzarote:.25,fuerteventura:.5,lapalma:.75,costablanca:1,girona:1.25,andalusie:.75,kypr:.5,madeira:.25,
   algarve:1,sicilie:.75,kreta:.5,antalya:.75,marrakes:.5,toskansko:1.5,gruzie:1.5,jordansko:1,sae:1.25,oman:1.75};
+
+/* WIND:start */
+/* Vítr: Open-Meteo Historical Weather API (reanalýza ERA5), 2016–2025, bod u základny lokality (at).
+   w = průměrná rychlost větru v 10 m přes den (9–17 h), km/h; wd = průměrný počet dní v měsíci s denním průměrem ≥ 25 km/h.
+   Generuje tools/fetch-wind.mjs (staženo 2026-10-22), ručně neupravovat. */
+const WIND={
+ mallorca:{w:[16.6,14.2,16.5,14.3,13],wd:[6.7,3,5.1,2.4,1.2],at:"Port de Pollença, Mallorca"},
+ tenerife:{w:[12.5,11.8,11,10.4,9.6],wd:[2,1.4,1.1,0.6,0.6],at:"Los Cristianos, Tenerife"},
+ grancanaria:{w:[13.8,13.9,13.1,13,12.8],wd:[1.3,2.3,1.8,1.5,0.8],at:"Maspalomas, Gran Canaria"},
+ lanzarote:{w:[19.8,20.9,22.5,21.3,23.5],wd:[8.6,7.7,11.5,11.1,13.9],at:"Costa Teguise, Lanzarote"},
+ fuerteventura:{w:[19.6,21,22.3,21.1,22.7],wd:[7.5,8.2,11.4,10.5,13.1],at:"Caleta de Fuste"},
+ lapalma:{w:[12.5,14.2,14.2,13.5,15.2],wd:[1.2,2.7,2.2,1.4,2],at:"Santa Cruz de La Palma"},
+ costablanca:{w:[14,13.8,16.1,15,14.3],wd:[2.5,1.4,3.5,1.6,0.8],at:"Calp, Alicante"},
+ girona:{w:[9.1,9.3,11.1,11.6,10.1],wd:[0.8,0.5,1.3,0.8,0.4],at:"Girona"},
+ andalusie:{w:[9.7,11.4,11.9,11.9,11],wd:[0.5,0.8,0.7,0.4,0],at:"San Pedro de Alcántara"},
+ kypr:{w:[12.4,11.8,14.5,13.1,14.3],wd:[1.4,0.6,2.6,1.7,2.3],at:"Limassol"},
+ madeira:{w:[11.2,10.9,11.7,10.5,10],wd:[0.5,1.2,1.7,0.8,0.3],at:"Funchal"},
+ algarve:{w:[13.8,14.9,16.6,16,15.3],wd:[2.2,2.8,5.1,2.6,1.3],at:"Portimão"},
+ sicilie:{w:[11.6,11.7,12.8,12.8,12],wd:[1.7,1.5,2.7,1.9,0.6],at:"Catania"},
+ kreta:{w:[15.3,15.7,16.5,15.1,15],wd:[4.6,4.7,6.3,4.1,4.4],at:"Chania"},
+ antalya:{w:[11,10.7,10.6,10.2,10.3],wd:[1.1,1.4,1.1,0.4,0.3],at:"Antalya"},
+ marrakes:{w:[6.7,7.2,8.7,8.5,8.8],wd:[0,0,0.1,0,0],at:"Marrakech"},
+ toskansko:{w:[11.4,11.5,13.2,12,11.6],wd:[1.1,1.3,1.1,0.3,0.4],at:"San Quirico d'Orcia"},
+ gruzie:{w:[9.7,10.8,12,11.8,11.6],wd:[0.5,1.2,2.4,2.5,2.3],at:"Tbilisi"},
+ jordansko:{w:[9.4,8.4,8.7,8.2,7.8],wd:[0.6,0.3,0,0,0],at:"Dead Sea, Sweimeh"},
+ sae:{w:[11.2,11.6,12.5,12,12.6],wd:[0.5,0.2,0.5,0.2,0],at:"Ras Al Khaimah"},
+ oman:{w:[8.2,10.1,11.3,13.4,13.2],wd:[0.2,0.2,0.6,0.9,1.1],at:"Birkat Al Mouz"}};
+/* WIND:end */

@@ -9,7 +9,7 @@ Web běží na GitHub Pages: https://palmovnik.github.io/zimni-kolo-2027/
 - `index.html`: aplikace (CSS, logika, šablony), bez build kroku. GitHub Pages servíruje větev
   `main` z kořene.
 - `data.js`: všechna data lokalit (`SRC`, `LOC`, `GASTRO`, `REC`, `REC2`, `ROUTES`, `COORD`, `GEO`,
-  `TR`). Načítá se před hlavním skriptem a jeho konstanty jsou globální. Změny dat dělej tady.
+  `TR`, `WIND`). Načítá se před hlavním skriptem a jeho konstanty jsou globální. Změny dat dělej tady.
 - `routes/`: předpočítané trasy (`<lokalita>-<číslo>.geojson` a `.gpx`). Generuje je
   `node tools/generate-routes.mjs` (potřebuje přístup na brouter.de); stránka je načítá přednostně,
   jinak trasu spočítá živě přes BRouter. Po změně tras v `ROUTES` nebo `COORD` spusť generátor
@@ -42,6 +42,9 @@ V `data.js`:
   `[název, km, m, body trasy]`.
 - `COORD`: souřadnice všech bodů tras. Každý bod z `ROUTES` tu musí být.
 - `GEO`: poloha lokality na mapě a umístění popisku. `TR`: transfer z letiště v hodinách.
+- `WIND`: vítr leden–květen u základny (první bod první trasy): `w` = průměr 9–17 h v km/h, `wd` = dny
+  s denním průměrem ≥ 25 km/h. Generuje ho `node tools/fetch-wind.mjs` (Open-Meteo, ERA5) mezi značkami
+  `WIND:start` a `WIND:end`; ručně neupravovat.
 
 V `index.html`:
 
@@ -60,8 +63,8 @@ V `index.html`:
    - Do stránky vkládat jen volně licencované fotky (Wikimedia Commons).
    - Fotky z Climbfinderu, Stravy, PJAMM, půjčoven a podobných webů nevkládat a nehotlinkovat
      (autorská práva). Na tyto weby jen odkazovat přes `SRC` a pole `web`.
-5. Nová lokalita = záznam v `LOC`, `GASTRO`, `ROUTES`, body v `COORD`, poloha v `GEO` a transfer
-   v `TR`. Pak zkontroluj popisek na mapě, aby se nepřekrýval s ostatními.
+5. Nová lokalita = záznam v `LOC`, `GASTRO`, `ROUTES`, body v `COORD`, poloha v `GEO`, transfer
+   v `TR` a vítr ve `WIND` (spusť `node tools/fetch-wind.mjs`). Pak zkontroluj popisek na mapě, aby se nepřekrýval s ostatními.
 6. Výchozí váhy indexu (`W0`) a stupnice skóre měnit jen po dohodě ve skupině. Mění pořadí lokalit
    pro všechny.
 7. Lokality, kde už skupina byla, mají `known: true` (Mallorca, Tenerife, Gran Canaria).
