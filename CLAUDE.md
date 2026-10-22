@@ -10,6 +10,8 @@ Web běží na GitHub Pages: https://palmovnik.github.io/zimni-kolo-2027/
   `main` z kořene.
 - `data.js`: všechna data lokalit (`SRC`, `LOC`, `GASTRO`, `REC`, `REC2`, `ROUTES`, `COORD`, `GEO`,
   `TR`, `WIND`). Načítá se před hlavním skriptem a jeho konstanty jsou globální. Změny dat dělej tady.
+  Po každé změně `data.js` zvyš verzi v `<script src="data.js?v=…">` v `index.html`, jinak prohlížeče
+  až 10 minut kombinují nový `index.html` se starým `data.js` z cache.
 - `routes/`: předpočítané trasy (`<lokalita>-<číslo>.geojson` a `.gpx`). Generuje je
   `node tools/generate-routes.mjs` (potřebuje přístup na brouter.de); stránka je načítá přednostně,
   jinak trasu spočítá živě přes BRouter. Po změně tras v `ROUTES` nebo `COORD` spusť generátor

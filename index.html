@@ -504,8 +504,11 @@ footer p{max-width:90ch}
 <dialog id="dlg"><button class="dlg-x" id="dlgX" aria-label="Zavřít">×</button><div id="dlgBody"></div></dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<script src="data.js"></script>
+<!-- ?v= měň při každé změně data.js, jinak prohlížeč může 10 minut držet starou verzi k novému index.html -->
+<script src="data.js?v=2026-10-22b"></script>
 <script>
+/* starý data.js z cache nesmí shodit stránku */
+if(typeof WIND==="undefined")window.WIND={};
 const MONTHS=["Leden","Únor","Březen","Duben","Květen"], MS=["Led","Úno","Bře","Dub","Kvě"], EUR=24.5;
 
 /* 2. kolo průzkumu doplňuje 1. kolo */
