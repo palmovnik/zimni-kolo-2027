@@ -188,14 +188,10 @@ const SRC={
  g_tus:{t:"Gambero Rosso: Val d'Orcia",u:"https://www.gamberorossointernational.com/?p=507221"}
 };
 
-/* Prázdniny a svátky, které zdražují letenky nebo mění letový řád (od, do včetně) */
+/* Prázdniny a svátky, které skupinu zajímají (školní prázdniny jen okresy Zlín a Praha-východ / Říčany), a změna letového řádu (od, do včetně) */
 const HOL=[
- {od:"2027-02-01",do:"2027-02-07",t:"Semestrální prázdniny Vídeň a Dolní Rakousy",src:["wko26"]},
- {od:"2027-02-01",do:"2027-03-14",t:"Jarní prázdniny v ČR (každý okres jiný týden)",src:["fin27","msmt27"],wide:1},
- {od:"2027-02-22",do:"2027-02-28",t:"Jarní prázdniny Praha 1–5 a Brno-město",src:["cebia27","topcz27"]},
- {od:"2027-03-01",do:"2027-03-07",t:"Jarní prázdniny Praha 6–10",src:["topcz27"]},
- {od:"2027-03-20",do:"2027-03-29",t:"Velikonoční prázdniny v Rakousku",src:["wko26"]},
- {od:"2027-03-26",do:"2027-03-29",t:"Velikonoce (Velký pátek až Velikonoční pondělí)"},
+ {od:"2027-03-08",do:"2027-03-14",t:"Jarní prázdniny Zlín a Praha-východ (Říčany)",src:["cebia27","topcz27"]},
+ {od:"2027-03-25",do:"2027-03-29",t:"Velikonoční prázdniny a Velikonoce (čtvrtek až Velikonoční pondělí)",src:["fin27"]},
  {od:"2027-03-28",do:"2027-03-28",t:"Začíná letní letový řád (sezónní linky)"},
  {od:"2027-05-01",do:"2027-05-01",t:"Svátek práce"},
  {od:"2027-05-08",do:"2027-05-08",t:"Den vítězství"}];
