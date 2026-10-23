@@ -78,6 +78,23 @@ V `index.html`:
   create policy "smazat" on votes for delete to anon using (true);
   ```
 
+## Komentáře k lokalitám
+
+- Každý může u lokality nechat jeden krátký komentář (max. 200 znaků) pod jménem z lišty hlasování.
+  Zobrazují se v Hlasování: místo a v detailu lokality (`kBlock(l)`). Tabulka `komentare` v Supabase,
+  `id` = jméno malými písmeny + `:` + id lokality.
+- Založení tabulky (Supabase → SQL Editor):
+
+  ```sql
+  create table komentare (id text primary key, name text not null, loc text not null,
+    text text not null, updated_at timestamptz not null default now());
+  alter table komentare enable row level security;
+  create policy "cist" on komentare for select to anon using (true);
+  create policy "pridat" on komentare for insert to anon with check (char_length(text) <= 200);
+  create policy "zmenit" on komentare for update to anon using (true) with check (char_length(text) <= 200);
+  create policy "smazat" on komentare for delete to anon using (true);
+  ```
+
 ## Termín (záložka Termín)
 
 - Každý si pod jménem z lišty hlasování označí dny leden–květen 2027, kdy může jet. Uloží se hned do

@@ -378,6 +378,14 @@ svg.lc .grid line{stroke:var(--line)}
 .cd.trip{outline:2px solid var(--accent);outline-offset:-1px}
 .callegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin:12px 0 0}
 .callegend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
+/* komentáře k lokalitám */
+.kb{margin-top:5px;font-size:13px}
+.kb ul{list-style:none;margin:0 0 3px;padding:0;display:grid;gap:2px}
+.kb li{overflow-wrap:anywhere}.kb li b{font-weight:600}.kb li.me b{color:var(--road)}
+.kb .kadd{border:0;background:none;padding:0;font:600 12.5px var(--f-body);color:var(--road);cursor:pointer;text-decoration:underline}
+.kform{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.kform input{flex:1 1 180px;min-width:0;background:var(--surface);border:1px solid var(--accent);border-radius:7px;padding:5px 8px;font:inherit;color:var(--ink)}
+#dlg .kb{margin:8px 0 14px}
 /* hlasování */
 .vtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
 .vtop input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit;color:var(--ink);width:170px;max-width:100%}
@@ -854,6 +862,7 @@ function openDetail(id){
     <div class="ctitle"><div><div class="eyebrow">${l.region}${l.known?" · už jsme byli":""}</div><h2>${l.name}</h2>
       <div class="terrain" style="margin-top:8px">${l.type.map(t=>`<span class="chip">${t}</span>`).join("")}${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></div>${idxBox(l)}</div>
     ${vCtl(l)}
+    ${kBlock(l)}
     <div class="tip">${l.tip}</div>
     ${idxBreakdown(l)}
     <div class="two">
@@ -1231,7 +1240,7 @@ function renderVoteBar(){const P=V.me.plus,M=V.me.minus,b=$("#vbar"),named=!!V.n
 function vRefresh(){const T=vTally();document.querySelectorAll("[data-vl]").forEach(el=>{const l=byId(el.dataset.vl);if(l)el.outerHTML=vCtl(l,!!el.dataset.vc,T)});
   renderVoteBar();$("#voteN").textContent=vRows().length;renderMap();if(S.tab==="hlasovani")renderVote();}
 function vMine(){const r=V.all.find(x=>x.id===vid(V.name));V.me=r?{plus:vClean(r.plus).slice(0,VPLUS),minus:vClean(r.minus).slice(0,VMIN)}:{plus:[],minus:[]};}
-async function vLoad(){if(!vOn())return;
+async function vLoad(){if(!vOn())return;kLoad();
   try{const r=await fetch(VOTE_CFG.url+"/rest/v1/votes?select=id,name,plus,minus,updated_at&order=updated_at",{headers:vH()});
     if(!r.ok)throw new Error("HTTP "+r.status);V.all=await r.json();if(!V.timer&&!V.busy)vMine();if(V.err){V.msg="";V.err=false}}
   catch(e){V.msg="hlasy se nenačetly";V.err=true;}
@@ -1254,17 +1263,18 @@ function vSetName(n){n=n.trim().slice(0,40);V.name=n;V.edit=false;try{localStora
   vMine();V.msg=n&&V.all.some(x=>x.id===vid(n))?"načetl jsem tvoje hlasy":"";V.err=false;vRefresh();
   if(typeof aMine==="function"){aMine();if(S.tab==="termin")renderCal();}}
 /* záložka Hlasování: výsledky */
-function renderVote(){const m=S.m,T=vTally(),rows=vRows();
+function renderVote(){const m=S.m,T=vTally(),rows=vRows(),kf=kFocused();
   const L=LOC.filter(l=>!(S.hideKnown&&l.known)).sort((a,b)=>T[b.id].s-T[a.id].s||T[b.id].p.length-T[a.id].p.length||total(b,m)-total(a,m));
   const max=Math.max(1,...L.map(l=>T[l.id].s));let rank=0,prev=null;
   $("#voteWrap").innerHTML=`${vOn()?"":`<p class="vnote">Hlasování zatím není propojené s databází, hlasy se neuloží.</p>`}
     <div>${L.map((l,i)=>{const t=T[l.id];if(t.s!==prev){rank=i+1;prev=t.s}
       return `<div class="vrow"><span class="rk">${rows.length?rank+".":""}</span>
-      <div class="nm"><a data-open="${l.id}">${l.name}</a> <span style="color:var(--muted);font-size:12.5px">· index ${total(l,m)}</span>${(t.p.length||t.m.length)?`<small>${[t.p.length?"+ "+t.p.map(escH).join(", "):"",t.m.length?"− "+t.m.map(escH).join(", "):""].filter(Boolean).join(" · ")}</small>`:""}${t.s>0?`<div class="vprog" style="width:${Math.round(t.s/max*100)}%"></div>`:""}</div>
+      <div class="nm"><a data-open="${l.id}">${l.name}</a> <span style="color:var(--muted);font-size:12.5px">· index ${total(l,m)}</span>${(t.p.length||t.m.length)?`<small>${[t.p.length?"+ "+t.p.map(escH).join(", "):"",t.m.length?"− "+t.m.map(escH).join(", "):""].filter(Boolean).join(" · ")}</small>`:""}${t.s>0?`<div class="vprog" style="width:${Math.round(t.s/max*100)}%"></div>`:""}${kBlock(l)}</div>
       ${vCtl(l,1,T)}</div>`}).join("")}</div>
     <div class="vwho"><div class="eyebrow" style="margin-bottom:4px">Hlasovalo ${rows.length} ${rows.length===1?"člověk":rows.length>=2&&rows.length<=4?"lidé":"lidí"}</div>
       <ul style="margin:0;padding-left:18px">${rows.map(r=>`<li><b>${escH(r.name)}</b>${r.me?" (ty)":""}: ${r.plus.map(id=>`<span class="p">+${byId(id).name}</span>`).join(", ")}${r.minus.length?", "+r.minus.map(id=>`<span class="m">−${byId(id).name}</span>`).join(", "):""}</li>`).join("")}</ul>
-      ${vOn()?`<p style="margin-top:10px"><button class="btn sm" id="vReload" type="button">Obnovit</button></p>`:""}</div>`;}
+      ${vOn()?`<p style="margin-top:10px"><button class="btn sm" id="vReload" type="button">Obnovit</button></p>`:""}</div>`;
+  if(kf)kFocus();}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){e.preventDefault();const [k,id]=b.dataset.v.split(":");vToggle(id,k);return}
   if(e.target.closest("#vEdit")){V.edit=true;renderVoteBar();const i=$("#vName");if(i){i.focus();i.select()}}
   else if(e.target.closest("#vOk"))vSetName($("#vName").value);
@@ -1275,6 +1285,42 @@ renderVoteBar();vLoad();
 /* hlasy ostatních: obnova při návratu na stránku a jednou za minutu */
 setInterval(()=>{if(!document.hidden&&!V.timer&&!V.busy)vLoad()},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!V.timer&&!V.busy)vLoad()});
+
+/* ---------- komentáře k lokalitám (Supabase, tabulka komentare): jeden krátký komentář na člověka a lokalitu ---------- */
+const K={all:[],edit:null,draft:null,missing:false,busy:false};
+const kId=(name,loc)=>vid(name)+":"+loc;
+async function kLoad(){if(!vOn())return;
+  try{const r=await fetch(VOTE_CFG.url+"/rest/v1/komentare?select=id,name,loc,text,updated_at&order=updated_at",{headers:vH()});
+    if(r.status===404){K.missing=true;return}if(!r.ok)throw new Error("HTTP "+r.status);K.missing=false;K.all=await r.json();}
+  catch(e){return}
+  kRefresh();}
+function kBlock(l){const me=vid(V.name),list=K.all.filter(c=>c.loc===l.id&&String(c.text||"").trim()),mine=list.find(c=>c.id===kId(V.name,l.id));
+  if(K.missing||!vOn())return `<div class="kb" data-kb="${l.id}"></div>`;
+  const items=list.length?`<ul>${list.map(c=>`<li class="${me&&c.id===kId(V.name,l.id)?"me":""}"><b>${escH(c.name)}:</b> ${escH(c.text)}</li>`).join("")}</ul>`:"";
+  const form=K.edit===l.id?`<div class="kform"><input data-kin="${l.id}" maxlength="200" placeholder="krátký komentář, např. proč ano nebo ne" value="${escH(K.draft!=null?K.draft:mine?mine.text:"")}" aria-label="Komentář k ${l.name}">
+      <button class="btn sm pri" type="button" data-ksave="${l.id}" ${K.busy?"disabled":""}>Uložit</button>${mine?`<button class="btn sm" type="button" data-kdel="${l.id}">Smazat</button>`:""}<button class="btn sm" type="button" data-kcancel="1">Zrušit</button></div>`
+    :`<button class="kadd" type="button" data-kedit="${l.id}">${mine?"upravit můj komentář":"+ komentář"}</button>`;
+  return `<div class="kb" data-kb="${l.id}">${items}${form}</div>`;}
+/* rozepsaný text drží K.draft, takže obnova seznamu (hlasy ostatních, nové komentáře) ho nesmaže */
+const kFocused=()=>!!(document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.kin);
+function kRefresh(){const kf=kFocused()||K.justOpened;K.justOpened=false;document.querySelectorAll("[data-kb]").forEach(el=>{const l=byId(el.dataset.kb);if(l)el.outerHTML=kBlock(l)});if(K.edit&&kf)kFocus();}
+function kFocus(){const i=document.querySelector(`[data-kin="${K.edit}"]`);if(i&&document.activeElement!==i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+async function kSave(loc,text){const name=V.name.trim();if(!name){vNeedName();return}text=text.trim().slice(0,200);K.busy=true;kRefresh();
+  const id=kId(name,loc);
+  try{const r=!text?await fetch(VOTE_CFG.url+"/rest/v1/komentare?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:vH()})
+      :await fetch(VOTE_CFG.url+"/rest/v1/komentare",{method:"POST",headers:{...vH(),Prefer:"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify({id,name,loc,text,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error("HTTP "+r.status);K.edit=null;K.draft=null;}
+  catch(e){alert("Komentář se nepodařilo uložit, zkus to znovu.");}
+  K.busy=false;await kLoad();kRefresh();}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-kedit],[data-ksave],[data-kdel],[data-kcancel]");if(!t)return;e.preventDefault();
+  if(t.dataset.kedit){if(!V.name.trim()){vNeedName();return}K.edit=t.dataset.kedit;K.draft=null;K.justOpened=true;kRefresh();}
+  else if(t.dataset.ksave){const i=document.querySelector(`[data-kin="${t.dataset.ksave}"]`);kSave(t.dataset.ksave,i?i.value:"");}
+  else if(t.dataset.kdel){if(confirm("Smazat tvůj komentář?"))kSave(t.dataset.kdel,"");}
+  else{K.edit=null;K.draft=null;kRefresh();}});
+document.addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.kin===K.edit)K.draft=e.target.value;});
+document.addEventListener("keydown",e=>{const loc=e.target.dataset&&e.target.dataset.kin;if(!loc)return;
+  if(e.key==="Enter"){e.preventDefault();kSave(loc,e.target.value)}else if(e.key==="Escape"){K.edit=null;K.draft=null;kRefresh()}});
 
 /* ---------- termín: kdo kdy může (Supabase, tabulka terminy) ---------- */
 const A={all:[],mine:new Set(),timer:null,busy:false,msg:"",err:false,missing:false,paint:null,ptype:""};
