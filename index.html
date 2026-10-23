@@ -221,6 +221,17 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:7px;
 .tabs{display:flex;gap:4px;overflow-x:auto;padding-block:14px 0;scrollbar-width:none}
 .tab{border:0;background:none;padding:8px 14px 10px;cursor:pointer;font:600 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab.vote{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:8px 8px 0 0}
+.tab.vote[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-bottom-color:var(--accent)}
+.tab.vote[aria-selected="true"] .n{background:var(--accent-ink);color:var(--accent)}
+.verify{margin-block:10px 24px}
+.verify summary{cursor:pointer;font:600 18px var(--f-display);text-transform:uppercase;letter-spacing:.03em;padding:10px 0;color:var(--muted)}
+.verify summary .n{display:inline-block;min-width:20px;padding:2px 6px;border-radius:10px;background:var(--line);color:var(--ink);font:600 12px/1.2 var(--f-body)}
+.verify summary .muted{font:400 13px var(--f-body);text-transform:none;letter-spacing:0}
+.howto{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px;counter-reset:hw}
+.howto li{counter-increment:hw;display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:14px;line-height:1.35}
+.howto li::before{content:counter(hw);flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font:700 14px/1 var(--f-body)}
+.howto a{cursor:pointer;font-weight:600}
 .tab .n{display:inline-block;min-width:20px;padding:2px 6px;margin-left:4px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:600 12px/1.2 var(--f-body)}
 
 main{padding-block:20px 60px}
@@ -435,7 +446,13 @@ footer p{max-width:90ch}
 <header class="top wrap">
   <div class="eyebrow">Silniční kola · gastro · leden – květen · 4–5 nocí · 5–6 lidí</div>
   <h1>Zimní <span>kolo</span> 2027</h1>
-  <p>Přehled lokalit, kam se dá z Prahy, Vídně nebo Bratislavy odletět za teplem a kopci. Vyber měsíc a letiště: karty, heatmapa i ceny se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko, nově i Fuerteventura a lokality na východ: Gruzie, Jordánsko, Emiráty a Omán.</p>
+  <p>Přehled lokalit, kam se dá z Prahy, Vídně nebo Bratislavy odletět za teplem a kopci. Vyber měsíc a letiště: mapa, ceny i index se přepočítají. Mallorca, Tenerife a Gran Canaria jsou tu jako srovnávací měřítko, nově i Fuerteventura a lokality na východ: Gruzie, Jordánsko, Emiráty a Omán.</p>
+  <ol class="howto">
+    <li><span>Napiš své jméno do lišty <b>Hlasuju jako</b>.</span></li>
+    <li><span>Na mapě klikni na lokalitu, otevře se detail s počasím, lety, cenou a trasami.</span></li>
+    <li><span>Rozdej hlasy o místě: 3× <b>+ pro</b>, 1× <b>− proti</b>. <a data-tab="hlasovani" href="#hlasovani">Hlasování: místo</a></span></li>
+    <li><span>Označ dny, kdy můžeš jet. <a data-tab="termin" href="#termin">Hlasování: termín</a></span></li>
+  </ol>
   <svg class="elev" viewBox="0 0 1000 38" preserveAspectRatio="none" aria-hidden="true"><path class="base" d="M0 37H1000"/><path d="M0 34 L60 33 L110 30 L150 22 L190 12 L215 6 L240 14 L290 28 L340 31 L380 26 L430 18 L470 24 L520 32 L570 30 L610 20 L650 9 L680 3 L705 9 L750 25 L800 33 L850 30 L890 22 L930 27 L1000 34"/></svg>
 </header>
 
@@ -470,25 +487,17 @@ footer p{max-width:90ch}
 
 <div class="tabbar">
   <div class="wrap tabwrap"><nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="lokality">Lokality</button>
+    <button class="tab vote" role="tab" data-tab="hlasovani">Hlasování: místo <span class="n" id="voteN">0</span></button>
+    <button class="tab vote" role="tab" data-tab="termin">Hlasování: termín <span class="n" id="calN">0</span></button>
     <button class="tab" role="tab" data-tab="pocasi">Počasí</button>
     <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
     <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
-    <button class="tab" role="tab" data-tab="hlasovani">Hlasování <span class="n" id="voteN">0</span></button>
-    <button class="tab" role="tab" data-tab="termin">Termín <span class="n" id="calN">0</span></button>
-    <button class="tab" role="tab" data-tab="overeni">K ověření <span class="n" id="vN">0</span></button>
   </nav>
-  <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
-      <select id="sortSel">
-        <option value="tot">Celkový index</option><option value="votes">Nejvíc hlasů</option><option value="idx">Index počasí</option><option value="hi">Nejtepleji</option><option value="rain">Nejméně deště</option><option value="wind">Nejméně větru</option>
-        <option value="sun">Nejvíc slunce</option><option value="flight">Nejkratší cesta</option><option value="price">Nejlevnější</option>
-        <option value="hills">Nejvíc kopců</option><option value="food">Nejlepší jídlo</option><option value="name">Abecedně</option>
-      </select></div></div>
+</div>
 </div>
 
 <main class="wrap">
   <div class="pick" id="pick"></div>
-  <section id="v-lokality" role="tabpanel"><div class="grid" id="grid"></div></section>
   <section id="v-pocasi" role="tabpanel" hidden>
     <div class="panel">
       <h2>Heatmapa podle měsíců</h2>
@@ -505,19 +514,13 @@ footer p{max-width:90ch}
     </div>
   </section>
   <section id="v-srovnani" role="tabpanel" hidden><div id="cmpWrap"></div></section>
-  <section id="v-overeni" role="tabpanel" hidden>
-    <div class="panel"><h2>Co ještě ověřit</h2>
-      <p class="hint">Údaje, které nemají ověřený zdroj nebo jsou jen odhad. Kdo ze skupiny něco ověří (rezervační systém aerolinky, ceník půjčovny, nabídka hotelu), odškrtne to tady a pošle zjištění do skupiny; správce pak opraví <code>data.js</code>. Odškrtnutí se ukládá jen v tvém prohlížeči.</p>
-      <div class="ctl" style="margin:0 0 12px"><label class="toggle"><input type="checkbox" id="vHide"> skrýt odškrtnuté</label><label class="toggle"><input type="checkbox" id="vNew"> jen nové lokality</label></div>
-      <div id="vList"></div></div>
-  </section>
   <section id="v-hlasovani" role="tabpanel" hidden>
-    <div class="panel"><h2>Hlasování</h2>
-      <p class="hint">Hlasuje se metodou D21 (Janečkova metoda). Každý má 3 kladné hlasy a 1 záporný; záporný jde použít až po rozdání aspoň 2 kladných. Jedné lokalitě dáš nejvýš jeden hlas. Pořadí určuje součet: kladné minus záporné. Jméno zadáš v liště nahoře a hlasuješ tlačítky + a − kdekoli na stránce: na kartách, v detailu, tabulce, srovnání i tady. Hlas se uloží hned a můžeš ho kdykoli změnit.</p>
+    <div class="panel"><h2>Hlasování: místo</h2>
+      <p class="hint">Každý má 3 hlasy <b>+ pro</b> a 1 hlas <b>− proti</b> (ten až po rozdání 2 kladných), jedné lokalitě dáš nejvýš jeden. Pořadí určuje součet. Hlasovat jde tady, v detailu lokality (klik na mapu nebo na název), v tabulce i ve srovnání. Hlas se uloží hned a jde kdykoli změnit. Metoda D21 (Janečkova).</p>
       <div id="voteWrap"></div></div>
   </section>
   <section id="v-termin" role="tabpanel" hidden>
-    <div class="panel"><h2>Společný termín</h2>
+    <div class="panel"><h2>Hlasování: termín</h2>
       <p class="hint">Označ dny, kdy můžeš být pryč. Myší můžeš táhnout přes víc dní, na telefonu ťukej po dnech. Jméno je stejné jako u hlasování v liště nahoře a vše se ukládá hned. Barva dne ukazuje, kolik lidí může. Nad kalendářem jsou nejlepší společné termíny pro počet nocí zvolený nahoře, počítají se dny od odletu do návratu včetně.</p>
       <div id="calWrap"></div></div>
   </section>
@@ -526,6 +529,13 @@ footer p{max-width:90ch}
     <div class="scroll"><table class="tbl" id="tbl"></table></div></div>
   </section>
 </main>
+
+<details class="wrap verify" id="verify"><summary>Co ještě ověřit <span class="n" id="vN">0</span> <span class="muted">· údaje bez zdroje nebo jen odhad</span></summary>
+<div class="panel">
+      <p class="hint">Údaje, které nemají ověřený zdroj nebo jsou jen odhad. Kdo ze skupiny něco ověří (rezervační systém aerolinky, ceník půjčovny, nabídka hotelu), odškrtne to tady a pošle zjištění do skupiny; správce pak opraví <code>data.js</code>. Odškrtnutí se ukládá jen v tvém prohlížeči.</p>
+      <div class="ctl" style="margin:0 0 12px"><label class="toggle"><input type="checkbox" id="vHide"> skrýt odškrtnuté</label><label class="toggle"><input type="checkbox" id="vNew"> jen nové lokality</label></div>
+      <div id="vList"></div></div>
+</details>
 
 <footer class="wrap">
   <p><b>Odkud jsou čísla.</b> U každé lokality najdeš v detailu zdroje k počasí, letům, cenám, stoupáním a gastru. Co zdroj nemá, je výslovně označené jako odhad. Ověřování proběhlo v říjnu 2026; řada webů byla dostupná jen přes výsledky vyhledávání, takže před rezervací vše zkontroluj u aerolinky, půjčovny a hotelu.</p>
@@ -570,7 +580,7 @@ const climbfinder=l=>"https://www.google.com/search?q="+encodeURIComponent("clim
 const fmtN=n=>n.toLocaleString("cs-CZ");
 
 /* ---------- state ---------- */
-const S={m:1,ap:"ALL",n:5,direct:false,hideKnown:false,sort:"tot",tab:"lokality",cmp:["costablanca","kypr","antalya"],metric:"tot",lcOff:{},tblSort:{k:"tot",dir:-1},w:null};
+const S={m:1,ap:"ALL",n:5,direct:false,hideKnown:false,sort:"tot",tab:"hlasovani",cmp:["costablanca","kypr","antalya"],metric:"tot",lcOff:{},tblSort:{k:"tot",dir:-1},w:null};
 try{const s=JSON.parse(localStorage.getItem("zk27")||"{}");Object.assign(S,s)}catch(e){}
 const save=()=>{try{localStorage.setItem("zk27",JSON.stringify({m:S.m,ap:S.ap,n:S.n,direct:S.direct,hideKnown:S.hideKnown,sort:S.sort,cmp:S.cmp,metric:S.metric,date:S.date,w:S.w,v2:S.v2,v3:S.v3,tblSort:S.tblSort}))}catch(e){}};
 const $=s=>document.querySelector(s), byId=id=>LOC.find(l=>l.id===id);
@@ -719,11 +729,10 @@ function renderControls(){
   $("#monthSeg").innerHTML=MS.map((m,i)=>`<button data-m="${i}" aria-pressed="${i===S.m}" title="${MONTHS[i]}">${m}</button>`).join("");
   document.querySelectorAll("#apSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ap===S.ap));
   document.querySelectorAll("#nSeg button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.n===S.n));
-  $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;$("#sortSel").value=S.sort;
+  $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;
   $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
-  ["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
-  $("#sortCtl").hidden=S.tab==="srovnani"||S.tab==="tabulka";
+  ["pocasi","srovnani","tabulka","hlasovani","termin"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
   $("#cmpN").textContent=S.cmp.length;
 }
 function visible(){
@@ -738,42 +747,6 @@ function renderPick(){
 }
 function idxBox(l){const v=total(l,S.m);return `<div class="idxwrap"><div class="idx" data-idx="${l.id}" tabindex="0" style="background:${METRICS.tot.col(v)};color:${inkOn(METRICS.tot.col(v))}" aria-label="Celkový index ${v}, podrobnosti"><b>${v}</b><small>index</small></div>${wBtn()}</div>`;}
 function flightLines(l){return flights(l).map(([k,f])=>{const [t,c]=dirTxt(f.d),di=dayIssue(f);return `<div><b>${APN[k]}</b> ${fmtH(f.t)} · <span class="dir ${c}">${t}</span>${di?`<div class="dayx">${di}</div>`:""}</div>`}).join("");}
-
-/* ---------- render: cards ---------- */
-function renderGrid(){
-  const L=visible(), m=S.m;
-  const VT=vTally();
-  $("#grid").innerHTML=L.length?L.map(l=>{const c=cost(l),inC=S.cmp.includes(l.id);
-    const tags=`<div class="tagrow">${l.known?'<span class="badge known">Už jsme byli</span>':''}${l.best.includes(m)?'<span class="badge best">Ideální měsíc</span>':''}</div>`;
-    return `<article class="card">
-    <div class="ph" data-ph="${l.id}" data-tags='${tags}'></div>
-    <div class="cbody">
-      <div class="ctitle"><div><h3>${l.name}</h3><div class="sub">${l.region}</div></div>${idxBox(l)}</div>
-      ${vCtl(l,0,VT)}
-      <p class="who">${WHO[l.id]||""}</p>
-      ${(()=>{const r=REC[l.id]||[],pick=[r.find(x=>x[0]==="pozor"),r.find(x=>x[0]==="tip")].filter(Boolean);
-        return pick.length?`<ul class="crec">${pick.map(([k,t,lang,st,u])=>`<li class="${k==="pozor"?"bad":"good"}"><span>${t}</span> <a href="${u}" target="_blank" rel="noopener" title="${st}">${lang} ↗</a></li>`).join("")}</ul>`:""})()}
-      <div class="wx">
-        <div><b>${l.hi[m]}°</b><small>max</small></div><div><b>${l.lo[m]}°</b><small>min</small></div>
-        <div><b>${String(l.rain[m]).replace(".",",")}</b><small>dny deště</small></div><div><b>${String(l.sun[m]).replace(".",",")}</b><small>h slunce</small></div>
-        <div><b>${fmtW(l,m)}</b><small>km/h vítr</small></div>
-      </div>
-      <dl class="facts">
-        <dt>Let</dt><dd>${flightLines(l)}</dd>
-        <dt>Cesta</dt><dd><b>${fmtH(travel(l))}</b> jedním směrem <span style="color:var(--muted)">(let + transfer)</span>${(()=>{const bf=bestFlight(l)||flights(l)[0],u=flightUrls(l,bf[0]);return `<div><a class="cardweb" href="${u.g}" target="_blank" rel="noopener" title="Google Flights, 6 cestujících, ${fmtD(tripDates()[0])} – ${fmtD(tripDates()[1])}">Ceny letenek ${APZ[bf[0]]} ↗</a></div>`})()}</dd>
-        <dt>Cena</dt><dd><b>${fmtK(c[0])}–${fmtK(c[1])} Kč</b> / os. za ${S.n} nocí</dd>
-        <dt>Terén</dt><dd><div class="terrain">${l.terrain.map(t=>`<span class="chip">${t}</span>`).join("")}</div></dd>
-        <dt>Trasy</dt><dd><div class="rlinks">${l.rt.r.map((r,i)=>`<button data-route="${l.id}:${i}" title="Mapa a GPX · ${r[1]} km · ${fmtN(r[2])} m">${r[0]}</button>`).join("")}</div></dd>
-        <dt>Fotky</dt><dd>${l.web.slice(0,2).filter(k=>SRC[k]).map(k=>`<a class="cardweb" href="${SRC[k].u}" target="_blank" rel="noopener">${SRC[k].t.split(":")[0]} ↗</a>`).join(" · ")}</dd>
-        <dt>Jídlo</dt><dd>${bars(l.g.s)} <span class="price">${l.g.p}</span><div class="dish">${l.g.d.slice(0,3).join(" · ")}</div></dd>
-      </dl>
-      <div class="pc"><div class="p"><h4>Výhody</h4><ul>${l.pros.map(p=>`<li>${p}</li>`).join("")}</ul></div>
-        <div class="c"><h4>Nevýhody</h4><ul>${l.cons.map(p=>`<li>${p}</li>`).join("")}</ul></div></div>
-      <div class="cfoot"><button class="btn pri" data-open="${l.id}">Detail</button>
-        <button class="btn" data-cmp="${l.id}" aria-pressed="${inC}">${inC?"✓ V porovnání":"+ Porovnat"}</button></div>
-    </div></article>`}).join(""):`<div class="empty">Žádná lokalita neodpovídá filtrům. Zkus vypnout „jen přímé lety“.</div>`;
-  document.querySelectorAll("#grid .ph").forEach(el=>photo(el,byId(el.dataset.ph),0));
-}
 
 /* ---------- render: heatmap + line chart ---------- */
 function renderHeat(){
@@ -1216,6 +1189,7 @@ function renderVerify(){const hide=$("#vHide").checked,onlyNew=$("#vNew").checke
 document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.dataset.vk;if(k){if(e.target.checked)VDONE[k]=1;else delete VDONE[k];
   try{localStorage.setItem("zk27v",JSON.stringify(VDONE))}catch(err){}render()}
   if(e.target.id==="vHide"||e.target.id==="vNew")renderVerify();});
+$("#verify").addEventListener("toggle",()=>{if($("#verify").open)renderVerify()});
 
 /* ---------- hlasování: D21 (Janečkova metoda), hlasy se ukládají do Supabase ---------- */
 /* Hlasuje se přímo u lokalit (karty, detail, tabulka, srovnání, výsledky); jméno a zbývající hlasy jsou v liště s filtry.
@@ -1378,14 +1352,15 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!A.timer&
 
 /* ---------- wiring ---------- */
 function render(){renderControls();renderPlan();renderPick();renderMap();
-  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else if(S.tab==="hlasovani")renderVote();else if(S.tab==="termin")renderCal();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
+  if($("#verify").open)renderVerify();
+  if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="hlasovani")renderVote();else if(S.tab==="termin")renderCal();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
 function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
 document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");if(!t)return;
   if(t.dataset.m!==undefined){S.m=+t.dataset.m;if(S.date&&Dt(S.date).getMonth()!==S.m)S.date=null;render()}
   else if(t.dataset.ap){S.ap=t.dataset.ap;render()}
   else if(t.dataset.n){S.n=+t.dataset.n;render()}
   else if(t.dataset.metric){S.metric=t.dataset.metric;render()}
-  else if(t.dataset.tab){S.tab=t.dataset.tab;try{history.replaceState(null,"","#"+S.tab)}catch(e){}render()}
+  else if(t.dataset.tab){e.preventDefault();S.tab=t.dataset.tab;try{history.replaceState(null,"","#"+S.tab)}catch(e){}render();if(!t.closest(".tabs"))$(".tabbar").scrollIntoView({behavior:"smooth"})}
   else if(t.dataset.open){e.preventDefault();openDetail(t.dataset.open)}
   else if(t.dataset.route){const [id,i]=t.dataset.route.split(":");openRoute(id,+i)}
   else if(t.dataset.cmp){toggleCmp(t.dataset.cmp);const d=$("#dlg");if(d.open)openDetail(t.dataset.cmp);render()}
@@ -1396,9 +1371,9 @@ document.addEventListener("click",e=>{const th=e.target.closest("th[data-sort]")
 $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()});
 $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
-$("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
-const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].includes(h))S.tab=h;
-addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+
+const h=(location.hash||"").slice(1);if(["pocasi","srovnani","tabulka","hlasovani","termin"].includes(h))S.tab=h;
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["pocasi","srovnani","tabulka","hlasovani","termin"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 render();
 if(matchMedia("(max-width:640px)").matches){MZ.x=170;mapApply()}
 </script>

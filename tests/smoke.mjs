@@ -40,9 +40,9 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
     return b; });
   if (badSrc.length) fail(`neexistující klíče zdrojů: ${badSrc.join(', ')}`);
 
-  for (const tab of ['pocasi', 'srovnani', 'tabulka', 'hlasovani', 'termin', 'overeni', 'lokality']) {
+  for (const tab of ['pocasi', 'srovnani', 'tabulka', 'termin', 'hlasovani']) {
     const el = await page.$(`[data-tab=${tab}]`);
-    if (el) await el.click(); else if (tab !== 'overeni') fail(`chybí záložka ${tab}`);
+    if (el) await el.click(); else fail(`chybí záložka ${tab}`);
     const tw = await page.evaluate(() => document.documentElement.scrollWidth);
     if (tw > width + 1) fail(`[${width}px] záložka ${tab} se posouvá do strany (šířka ${tw})`);
   }
@@ -50,11 +50,17 @@ for (const [width, height] of [[1440, 900], [400, 850]]) {
   for (const ap of ['PRG', 'VIE', 'BTS', 'ALL']) await page.click(`[data-ap=${ap}]`);
 
   // hlasování bez jména: klik na + u karty nesmí nic uložit, ale má nabídnout zadání jména
-  await page.click('#grid [data-v]');
+  await page.click('#voteWrap [data-v]');
   if (!(await page.$('#vName'))) fail(`[${width}px] po kliknutí na hlas bez jména se neukázalo pole pro jméno`);
 
+  // sekce „Co ještě ověřit“ dole
+  await page.click('#verify summary');
+  await page.waitForTimeout(100);
+  if (!(await page.$$eval('#vList .vgrp', (x) => x.length))) fail(`[${width}px] sekce Co ještě ověřit je prázdná`);
+  await page.click('#verify summary');
+
   // detail lokality, okno vah, okno trasy
-  await page.click('#grid [data-open]');
+  await page.click('#voteWrap [data-open]');
   await page.waitForTimeout(200);
   if (!(await page.$eval('#dlg', (d) => d.open))) fail(`[${width}px] neotevřel se detail lokality`);
   await page.click('#dlg .ibd .wbtn');
