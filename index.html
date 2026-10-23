@@ -347,6 +347,26 @@ svg.lc .grid line{stroke:var(--line)}
 .vwho2{font-size:12.5px;color:var(--muted);flex:1 1 140px;min-width:0;overflow-wrap:anywhere}.vwho2 .p{color:var(--good)}.vwho2 .m{color:var(--bad)}
 .card .vctl{margin:10px 0 0}
 .mapbox .mk text.vs{font:700 12px var(--f-body);text-transform:none;letter-spacing:0;fill:var(--good)}.mapbox .mk text.vs.neg{fill:var(--bad)}
+/* termín: kalendář dostupnosti */
+.calbest{display:grid;gap:6px;margin:0 0 16px}
+.cbw{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:8px 10px;border-radius:9px;background:var(--surface-2)}
+.cbw b.n{font:700 20px/1 var(--f-display);color:var(--good);min-width:46px}
+.cbw .miss{font-size:12.5px;color:var(--muted)}.cbw .hol{font-size:12.5px;color:var(--warn)}
+.cbw.cur{outline:2px solid var(--accent)}
+.calmonths{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.calm h3{font-size:19px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.calm h3 button{font:600 12px var(--f-body);text-transform:none;border:0;background:none;color:var(--road);cursor:pointer;padding:0;text-decoration:underline}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px;user-select:none;-webkit-user-select:none}
+.calg .dow{font-size:11px;color:var(--muted);text-align:center;text-transform:uppercase}
+.cd{position:relative;aspect-ratio:1/1;border-radius:6px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font:600 14px/1 var(--f-body);color:var(--ink);padding:0}
+.cd small{font:600 10px/1 var(--f-body);color:var(--muted);margin-top:2px}
+.cd.we{color:var(--accent)}
+.cd.mine{box-shadow:inset 0 0 0 2px var(--road)}
+.cd.mine::after{content:"✓";position:absolute;top:1px;right:3px;font-size:9px;color:var(--road)}
+.cd.hol{text-decoration:underline dotted var(--warn) 2px;text-underline-offset:3px}
+.cd.trip{outline:2px solid var(--accent);outline-offset:-1px}
+.callegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin:12px 0 0}
+.callegend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
 /* hlasování */
 .vtop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
 .vtop input{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit;color:var(--ink);width:170px;max-width:100%}
@@ -455,6 +475,7 @@ footer p{max-width:90ch}
     <button class="tab" role="tab" data-tab="srovnani">Srovnání <span class="n" id="cmpN">0</span></button>
     <button class="tab" role="tab" data-tab="tabulka">Tabulka</button>
     <button class="tab" role="tab" data-tab="hlasovani">Hlasování <span class="n" id="voteN">0</span></button>
+    <button class="tab" role="tab" data-tab="termin">Termín <span class="n" id="calN">0</span></button>
     <button class="tab" role="tab" data-tab="overeni">K ověření <span class="n" id="vN">0</span></button>
   </nav>
   <div class="ctl sortctl" id="sortCtl"><label class="lbl" for="sortSel">Řadit</label>
@@ -494,6 +515,11 @@ footer p{max-width:90ch}
     <div class="panel"><h2>Hlasování</h2>
       <p class="hint">Hlasuje se metodou D21 (Janečkova metoda). Každý má 3 kladné hlasy a 1 záporný; záporný jde použít až po rozdání aspoň 2 kladných. Jedné lokalitě dáš nejvýš jeden hlas. Pořadí určuje součet: kladné minus záporné. Jméno zadáš v liště nahoře a hlasuješ tlačítky + a − kdekoli na stránce: na kartách, v detailu, tabulce, srovnání i tady. Hlas se uloží hned a můžeš ho kdykoli změnit.</p>
       <div id="voteWrap"></div></div>
+  </section>
+  <section id="v-termin" role="tabpanel" hidden>
+    <div class="panel"><h2>Společný termín</h2>
+      <p class="hint">Označ dny, kdy můžeš být pryč. Myší můžeš táhnout přes víc dní, na telefonu ťukej po dnech. Jméno je stejné jako u hlasování v liště nahoře a vše se ukládá hned. Barva dne ukazuje, kolik lidí může. Nad kalendářem jsou nejlepší společné termíny pro počet nocí zvolený nahoře, počítají se dny od odletu do návratu včetně.</p>
+      <div id="calWrap"></div></div>
   </section>
   <section id="v-tabulka" role="tabpanel" hidden>
     <div class="panel"><h2>Všechny lokality</h2><p class="hint" id="tblHint"></p>
@@ -696,7 +722,7 @@ function renderControls(){
   $("#fDirect").checked=S.direct;$("#fKnown").checked=S.hideKnown;$("#sortSel").value=S.sort;
   $("#metricSeg").innerHTML=Object.entries(METRICS).map(([k,v])=>`<button data-metric="${k}" aria-pressed="${k===S.metric}">${v.lbl}</button>`).join("");
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===S.tab));
-  ["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
+  ["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].forEach(t=>$("#v-"+t).hidden=t!==S.tab);
   $("#sortCtl").hidden=S.tab==="srovnani"||S.tab==="tabulka";
   $("#cmpN").textContent=S.cmp.length;
 }
@@ -1251,7 +1277,8 @@ function vToggle(id,kind){if(!V.name.trim()){vNeedName();return}const P=V.me.plu
   else{if(M.includes(id))M.length=0;else if(P.filter(x=>x!==id).length>=VMIN_AFTER){if(P.includes(id))P.splice(P.indexOf(id),1);M.length=0;M.push(id);}}
   if(P.length<VMIN_AFTER)M.length=0;V.msg="";clearTimeout(V.timer);V.timer=vOn()?setTimeout(vSave,700):null;vRefresh();}
 function vSetName(n){n=n.trim().slice(0,40);V.name=n;V.edit=false;try{localStorage.setItem("zk27n",n)}catch(err){}
-  vMine();V.msg=n&&V.all.some(x=>x.id===vid(n))?"načetl jsem tvoje hlasy":"";V.err=false;vRefresh();}
+  vMine();V.msg=n&&V.all.some(x=>x.id===vid(n))?"načetl jsem tvoje hlasy":"";V.err=false;vRefresh();
+  if(typeof aMine==="function"){aMine();if(S.tab==="termin")renderCal();}}
 /* záložka Hlasování: výsledky */
 function renderVote(){const m=S.m,T=vTally(),rows=vRows();
   const L=LOC.filter(l=>!(S.hideKnown&&l.known)).sort((a,b)=>T[b.id].s-T[a.id].s||T[b.id].p.length-T[a.id].p.length||total(b,m)-total(a,m));
@@ -1275,9 +1302,83 @@ renderVoteBar();vLoad();
 setInterval(()=>{if(!document.hidden&&!V.timer&&!V.busy)vLoad()},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!V.timer&&!V.busy)vLoad()});
 
+/* ---------- termín: kdo kdy může (Supabase, tabulka terminy) ---------- */
+const A={all:[],mine:new Set(),timer:null,busy:false,msg:"",err:false,missing:false,paint:null,ptype:""};
+const C0=Dt("2027-01-01"),C1=Dt("2027-05-31");
+const aRows=()=>{const me=vid(V.name),rows=A.all.filter(r=>r.id!==me).map(r=>({name:r.name,days:new Set(Array.isArray(r.days)?r.days:[])}));
+  if(me&&A.mine.size)rows.push({name:V.name.trim(),days:A.mine,me:1});return rows.filter(r=>r.days.size);};
+function aMine(){const r=A.all.find(x=>x.id===vid(V.name));A.mine=new Set(r&&Array.isArray(r.days)?r.days:[]);}
+async function aLoad(){if(!vOn())return;
+  try{const r=await fetch(VOTE_CFG.url+"/rest/v1/terminy?select=id,name,days&order=updated_at",{headers:vH()});
+    if(r.status===404){A.missing=true;throw new Error("chybí tabulka")}if(!r.ok)throw new Error("HTTP "+r.status);
+    A.missing=false;A.all=await r.json();if(!A.timer&&!A.busy)aMine();}
+  catch(e){A.msg="termíny se nenačetly";A.err=true;}
+  $("#calN").textContent=aRows().length;if(S.tab==="termin")renderCal();}
+async function aSave(){A.timer=null;const name=V.name.trim();if(!name||!vOn())return;A.busy=true;
+  const id=vid(name),days=[...A.mine].sort();
+  try{const r=!days.length?await fetch(VOTE_CFG.url+"/rest/v1/terminy?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:vH()})
+      :await fetch(VOTE_CFG.url+"/rest/v1/terminy",{method:"POST",headers:{...vH(),Prefer:"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify({id,name,days,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error("HTTP "+r.status);A.msg="uloženo ✓";A.err=false;}
+  catch(e){A.msg="neuloženo, zkus znovu";A.err=true;}
+  A.busy=false;await aLoad();}
+function aChanged(){A.msg="";clearTimeout(A.timer);A.timer=vOn()?setTimeout(aSave,900):null;renderCal();$("#calN").textContent=aRows().length;}
+/* nejlepší okna: odlet až návrat (S.n + 1 dní), kolik lidí může všechny dny; překrývající se okna se nevypisují */
+function aWindows(rows){const out=[],n=S.n;
+  for(let d=new Date(C0);;d.setDate(d.getDate()+1)){const e=new Date(d);e.setDate(e.getDate()+n);if(e>C1)break;
+    const ds=[];for(let i=0;i<=n;i++){const x=new Date(d);x.setDate(x.getDate()+i);ds.push(isoD(x))}
+    const ok=rows.filter(r=>ds.every(k=>r.days.has(k)));out.push({a:new Date(d),b:e,ok,miss:rows.filter(r=>!ok.includes(r))});}
+  out.sort((x,y)=>y.ok.length-x.ok.length||holidaysIn(x.a,x.b).length-holidaysIn(y.a,y.b).length||x.a-y.a);
+  const pick=[];for(const w of out){if(!w.ok.length||pick.length>=6)break;if(pick.some(p=>w.a<=p.b&&w.b>=p.a))continue;pick.push(w)}
+  return pick;}
+function renderCal(){const rows=aRows(),N=rows.length,me=!!V.name.trim(),[ta,tb]=tripDates();
+  const cnt={};rows.forEach(r=>r.days.forEach(k=>{(cnt[k]=cnt[k]||[]).push(r.name)}));
+  const W=N?aWindows(rows):[];
+  const head=!vOn()?`<p class="vnote">Kalendář zatím není propojený s databází, nic se neuloží.</p>`
+    :A.missing?`<p class="vnote">V Supabase ještě chybí tabulka <code>terminy</code>. Správce ji založí podle návodu v <code>CLAUDE.md</code>.</p>`:"";
+  const best=N?`<div class="eyebrow" style="margin-bottom:6px">Nejlepší termíny · ${S.n} nocí · vyplnilo ${N} ${N===1?"člověk":N<5?"lidé":"lidí"}</div>
+    <div class="calbest">${W.length?W.map(w=>{const h=holidaysIn(w.a,w.b),cur=isoD(w.a)===isoD(ta)&&!!S.date;
+      return `<div class="cbw${cur?" cur":""}"><b class="n">${w.ok.length}/${N}</b><span><b>${fmtD(w.a)} – ${fmtD(w.b)}</b></span>
+        ${w.miss.length?`<span class="miss">nemůže: ${w.miss.map(r=>escH(r.name)).join(", ")}</span>`:`<span class="miss" style="color:var(--good)">můžou všichni</span>`}
+        ${h.length?`<span class="hol" title="${escH(h.map(x=>x.t).join(", "))}">⚠ ${escH(h[0].t)}${h.length>1?" a další":""}</span>`:""}
+        <button class="btn sm${cur?"":" pri"}" data-calpick="${isoD(w.a)}" style="margin-left:auto">${cur?"✓ vybráno":"Použít termín"}</button></div>`}).join("")
+      :`<p class="muted">Zatím žádný den, kdy by mohl aspoň jeden člověk celých ${S.n} nocí.</p>`}</div>`
+    :`<p class="vnote">Zatím nikdo nevyplnil. Začni ty: ${me?"klikni na dny, kdy můžeš.":"napiš nahoře jméno a klikni na dny, kdy můžeš."}</p>`;
+  const months=[0,1,2,3,4].map(mi=>{const first=new Date(2027,mi,1,12),dim=new Date(2027,mi+1,0).getDate(),off=(first.getDay()+6)%7;
+    let cells=["po","út","st","čt","pá","so","ne"].map(d=>`<span class="dow">${d}</span>`).join("")+"<span></span>".repeat(off);
+    for(let d=1;d<=dim;d++){const dt=new Date(2027,mi,d,12),k=isoD(dt),c=(cnt[k]||[]).length,hol=HOL.filter(h=>h.od<=k&&h.do>=k&&!h.wide),mine=A.mine.has(k);
+      const bg=c?`background:color-mix(in srgb,var(--good) ${Math.round(15+75*c/Math.max(N,1))}%,var(--surface));${c/Math.max(N,1)>.55?"color:var(--surface)":""}`:"";
+      const tip=`${fmtD(dt)}${hol.length?" · "+hol.map(h=>h.t).join(", "):""}\nMůže ${c} z ${N}${c?": "+cnt[k].join(", "):""}${mine?"\n(ty můžeš)":""}`;
+      cells+=`<button type="button" class="cd${dt.getDay()%6===0?" we":""}${mine?" mine":""}${hol.length?" hol":""}${S.date&&dt>=ta&&dt<=tb?" trip":""}" data-d="${k}" style="${bg}" title="${escH(tip)}" aria-pressed="${mine}" aria-label="${fmtD(dt)}, může ${c} z ${N}">${d}${c?`<small style="${c/Math.max(N,1)>.55?"color:inherit":""}">${c}</small>`:""}</button>`;}
+    const all=[...Array(dim)].every((_,i)=>A.mine.has(isoD(new Date(2027,mi,i+1,12))));
+    return `<div class="calm"><h3>${MONTHS[mi]} 2027 <button type="button" data-calmonth="${mi}">${all?"zrušit celý měsíc":"můžu celý měsíc"}</button></h3><div class="calg">${cells}</div></div>`}).join("");
+  $("#calWrap").innerHTML=`${head}${best}
+    <p class="vstate">${me?`Vyplňuješ za <b>${escH(V.name)}</b> · označeno ${A.mine.size} dní`:"Nejdřív napiš nahoře jméno"}${A.timer||A.busy?" · ukládám…":A.msg?` · <span style="color:var(--${A.err?"bad":"good"})">${escH(A.msg)}</span>`:""}${me&&A.mine.size?` · <button class="btn sm" type="button" data-calclear="1">smazat moje dny</button>`:""}</p>
+    <div class="calmonths">${months}</div>
+    <div class="callegend"><span><i style="background:color-mix(in srgb,var(--good) 90%,var(--surface))"></i>můžou skoro všichni</span><span><i style="background:color-mix(in srgb,var(--good) 30%,var(--surface))"></i>může málokdo</span><span><i style="box-shadow:inset 0 0 0 2px var(--road)"></i>můžeš ty</span><span><i style="outline:2px solid var(--accent);outline-offset:-1px"></i>vybraný termín</span><span><i style="border-color:var(--warn);border-style:dotted;border-width:2px"></i>svátek nebo prázdniny</span></div>
+    ${N?`<p class="hint" style="margin-top:10px">Vyplnili: ${rows.map(r=>`<b>${escH(r.name)}</b> (${r.days.size} dní)`).join(", ")}</p>`:""}`;}
+function aSet(k,on){if(on)A.mine.add(k);else A.mine.delete(k);}
+/* tažení myší označí (nebo zruší) všechny dny od prvního po aktuální políčko */
+function aPaintTo(k){const [a,b]=[A.from,k].sort(),cur=new Set(A.snap);
+  for(let d=Dt(a);d<=Dt(b);d.setDate(d.getDate()+1)){if(A.paint)cur.add(isoD(d));else cur.delete(isoD(d))}
+  A.mine=cur;document.querySelectorAll("#calWrap [data-d]").forEach(el=>el.classList.toggle("mine",cur.has(el.dataset.d)));}
+$("#calWrap").addEventListener("pointerdown",e=>{A.ptype=e.pointerType;const c=e.target.closest("[data-d]");if(!c||e.pointerType!=="mouse"||e.button)return;
+  if(!V.name.trim()){vNeedName();return}e.preventDefault();A.paint=!A.mine.has(c.dataset.d);A.from=c.dataset.d;A.snap=new Set(A.mine);aPaintTo(c.dataset.d);});
+$("#calWrap").addEventListener("pointermove",e=>{if(A.paint==null)return;const el=document.elementFromPoint(e.clientX,e.clientY),c=el&&el.closest("#calWrap [data-d]");if(c)aPaintTo(c.dataset.d)});
+addEventListener("pointerup",()=>{if(A.paint==null)return;A.paint=null;aChanged();});
+$("#calWrap").addEventListener("click",e=>{const c=e.target.closest("[data-d]");
+  if(c){if(A.ptype==="mouse")return;if(!V.name.trim()){vNeedName();return}aSet(c.dataset.d,!A.mine.has(c.dataset.d));aChanged();return}
+  const mb=e.target.closest("[data-calmonth]");if(mb){if(!V.name.trim()){vNeedName();return}const mi=+mb.dataset.calmonth,dim=new Date(2027,mi+1,0).getDate(),ks=[...Array(dim)].map((_,i)=>isoD(new Date(2027,mi,i+1,12)));
+    const all=ks.every(k=>A.mine.has(k));ks.forEach(k=>aSet(k,!all));aChanged();return}
+  if(e.target.closest("[data-calclear]")){if(confirm("Smazat všechny tvoje označené dny?")){A.mine.clear();aChanged()}return}
+  const p=e.target.closest("[data-calpick]");if(p){S.date=p.dataset.calpick;S.m=Dt(S.date).getMonth();render();}});
+aLoad();
+setInterval(()=>{if(!document.hidden&&!A.timer&&!A.busy&&A.paint==null)aLoad()},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!A.timer&&!A.busy)aLoad()});
+
 /* ---------- wiring ---------- */
 function render(){renderControls();renderPlan();renderPick();renderMap();
-  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else if(S.tab==="hlasovani")renderVote();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
+  if(S.tab==="lokality")renderGrid();else if(S.tab==="pocasi"){renderHeat();renderLine()}else if(S.tab==="srovnani")renderCmp();else if(S.tab==="overeni")renderVerify();else if(S.tab==="hlasovani")renderVote();else if(S.tab==="termin")renderCal();else renderTable();$("#vN").textContent=verifyItems().filter(v=>!VDONE[v.k]).length;save();}
 function toggleCmp(id){const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=4)S.cmp.shift();S.cmp.push(id)}delete S.lcOff[id];}
 document.addEventListener("click",e=>{const t=e.target.closest("button,a,.mk");if(!t)return;
   if(t.dataset.m!==undefined){S.m=+t.dataset.m;if(S.date&&Dt(S.date).getMonth()!==S.m)S.date=null;render()}
@@ -1296,8 +1397,8 @@ $("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()})
 $("#fDirect").addEventListener("change",e=>{S.direct=e.target.checked;render()});
 $("#fKnown").addEventListener("change",e=>{S.hideKnown=e.target.checked;render()});
 $("#sortSel").addEventListener("change",e=>{S.sort=e.target.value;render()});
-const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].includes(h))S.tab=h;
-addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+const h=(location.hash||"").slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].includes(h))S.tab=h;
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["lokality","pocasi","srovnani","tabulka","overeni","hlasovani","termin"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 render();
 if(matchMedia("(max-width:640px)").matches){MZ.x=170;mapApply()}
 </script>

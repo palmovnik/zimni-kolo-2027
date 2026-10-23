@@ -78,6 +78,24 @@ V `index.html`:
   create policy "smazat" on votes for delete to anon using (true);
   ```
 
+## Termín (záložka Termín)
+
+- Každý si pod jménem z lišty hlasování označí dny leden–květen 2027, kdy může jet. Uloží se hned do
+  Supabase, tabulka `terminy` (`days` = pole dat `YYYY-MM-DD`). Stránka z toho spočítá nejlepší okna
+  pro zvolený počet nocí (`S.n`, dny od odletu do návratu včetně) a tlačítkem „Použít termín“ nastaví
+  `S.date`.
+- Založení tabulky (Supabase → SQL Editor):
+
+  ```sql
+  create table terminy (id text primary key, name text not null, days text[] not null default '{}',
+    updated_at timestamptz not null default now());
+  alter table terminy enable row level security;
+  create policy "cist" on terminy for select to anon using (true);
+  create policy "pridat" on terminy for insert to anon with check (cardinality(days) <= 151);
+  create policy "zmenit" on terminy for update to anon using (true) with check (cardinality(days) <= 151);
+  create policy "smazat" on terminy for delete to anon using (true);
+  ```
+
 ## Pravidla pro data (nejdůležitější)
 
 1. Každý faktický údaj má zdroj v `SRC`, nebo je výslovně označený jako odhad (`cl.est`, text
