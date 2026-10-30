@@ -370,10 +370,26 @@ svg.lc .grid line{stroke:var(--line)}
 .calg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px;user-select:none;-webkit-user-select:none}
 .calg .dow{font-size:11px;color:var(--muted);text-align:center;text-transform:uppercase}
 .cd{position:relative;aspect-ratio:1/1;border-radius:6px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font:600 14px/1 var(--f-body);color:var(--ink);padding:0}
-.cd small{font:600 10px/1 var(--f-body);color:var(--muted);margin-top:2px}
-.cd.we{color:var(--accent)}
+.cd small{font:600 10px/1 var(--f-body);margin-top:3px}
+.cd .dots{display:flex;gap:2px;margin-top:4px}
+.cd .dots i{width:6px;height:6px;border-radius:50%;border:1.2px solid currentColor;opacity:.55}
+.cd .dots i.on{background:currentColor;opacity:1}
+.cd.k1{background:color-mix(in srgb,var(--warn) 22%,var(--surface))}
+.cd.k2{background:var(--warn);border-color:var(--warn);color:var(--surface)}
+.cd.k3{background:var(--good);border-color:var(--good);color:var(--surface)}
+.cd.dim{opacity:.38}
+.cd.we:not(.k2):not(.k3) .dn{color:var(--accent)}
+.calmin{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 12px;font-size:13.5px}
+.calppl{margin-top:22px}
+.calppl table{border-collapse:separate;border-spacing:1px;width:100%;table-layout:fixed;font-size:11px}
+.calppl th{font-weight:600;color:var(--muted);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px}
+.calppl thead th{text-align:center;padding:0;font-size:9.5px;overflow:visible;text-overflow:clip}
+.calppl td{height:14px;background:var(--surface-2);border-radius:2px;padding:0}
+.calppl td.on{background:var(--good)}.calppl td.we:not(.on){background:color-mix(in srgb,var(--accent) 14%,var(--surface-2))}
+.calppl td.all{background:var(--good);box-shadow:inset 0 0 0 1px var(--ink)}
+
 .cd.mine{box-shadow:inset 0 0 0 2px var(--road)}
-.cd.mine::after{content:"✓";position:absolute;top:1px;right:3px;font-size:9px;color:var(--road)}
+.cd.mine::after{content:"✓";position:absolute;top:1px;right:3px;font-size:9px;color:currentColor}
 .cd.hol{text-decoration:underline dotted var(--warn) 2px;text-underline-offset:3px}
 .cd.trip{outline:2px solid var(--accent);outline-offset:-1px}
 .callegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin:12px 0 0}
@@ -1323,7 +1339,7 @@ document.addEventListener("keydown",e=>{const loc=e.target.dataset&&e.target.dat
   if(e.key==="Enter"){e.preventDefault();kSave(loc,e.target.value)}else if(e.key==="Escape"){K.edit=null;K.draft=null;kRefresh()}});
 
 /* ---------- termín: kdo kdy může (Supabase, tabulka terminy) ---------- */
-const A={all:[],mine:new Set(),timer:null,busy:false,msg:"",err:false,missing:false,paint:null,ptype:""};
+const A={all:[],mine:new Set(),timer:null,busy:false,msg:"",err:false,missing:false,paint:null,ptype:"",min:null};
 const C0=Dt("2027-01-01"),C1=Dt("2027-05-31");
 const aRows=()=>{const me=vid(V.name),rows=A.all.filter(r=>r.id!==me).map(r=>({name:r.name,days:new Set(Array.isArray(r.days)?r.days:[])}));
   if(me&&A.mine.size)rows.push({name:V.name.trim(),days:A.mine,me:1});return rows.filter(r=>r.days.size);};
@@ -1351,8 +1367,12 @@ function aWindows(rows){const out=[],n=S.n;
   out.sort((x,y)=>y.ok.length-x.ok.length||holidaysIn(x.a,x.b).length-holidaysIn(y.a,y.b).length||x.a-y.a);
   const pick=[];for(const w of out){if(!w.ok.length||pick.length>=6)break;if(pick.some(p=>w.a<=p.b&&w.b>=p.a))continue;pick.push(w)}
   return pick;}
+/* barva dne podle počtu lidí: všichni / chybí jeden / někdo / nikdo */
 function renderCal(){const rows=aRows(),N=rows.length,me=!!V.name.trim(),[ta,tb]=tripDates();
+  const kCls=c=>!c||!N?"":c===N?" k3":c===N-1&&N>=3?" k2":" k1";
   const cnt={};rows.forEach(r=>r.days.forEach(k=>{(cnt[k]=cnt[k]||[]).push(r.name)}));
+  /* výchozí zvýraznění: dny s nejvyšším dosaženým počtem lidí */
+  const top=Math.max(0,...Object.values(cnt).map(x=>x.length)),minN=Math.min(A.min||top,N);
   const W=N?aWindows(rows):[];
   const head=!vOn()?`<p class="vnote">Kalendář zatím není propojený s databází, nic se neuloží.</p>`
     :A.missing?`<p class="vnote">V Supabase ještě chybí tabulka <code>terminy</code>. Správce ji založí podle návodu v <code>CLAUDE.md</code>.</p>`:"";
@@ -1367,16 +1387,26 @@ function renderCal(){const rows=aRows(),N=rows.length,me=!!V.name.trim(),[ta,tb]
   const months=[0,1,2,3,4].map(mi=>{const first=new Date(2027,mi,1,12),dim=new Date(2027,mi+1,0).getDate(),off=(first.getDay()+6)%7;
     let cells=["po","út","st","čt","pá","so","ne"].map(d=>`<span class="dow">${d}</span>`).join("")+"<span></span>".repeat(off);
     for(let d=1;d<=dim;d++){const dt=new Date(2027,mi,d,12),k=isoD(dt),c=(cnt[k]||[]).length,hol=HOL.filter(h=>h.od<=k&&h.do>=k&&!h.wide),mine=A.mine.has(k);
-      const bg=c?`background:color-mix(in srgb,var(--good) ${Math.round(15+75*c/Math.max(N,1))}%,var(--surface));${c/Math.max(N,1)>.55?"color:var(--surface)":""}`:"";
-      const tip=`${fmtD(dt)}${hol.length?" · "+hol.map(h=>h.t).join(", "):""}\nMůže ${c} z ${N}${c?": "+cnt[k].join(", "):""}${mine?"\n(ty můžeš)":""}`;
-      cells+=`<button type="button" class="cd${dt.getDay()%6===0?" we":""}${mine?" mine":""}${hol.length?" hol":""}${S.date&&dt>=ta&&dt<=tb?" trip":""}" data-d="${k}" style="${bg}" title="${escH(tip)}" aria-pressed="${mine}" aria-label="${fmtD(dt)}, může ${c} z ${N}">${d}${c?`<small style="${c/Math.max(N,1)>.55?"color:inherit":""}">${c}</small>`:""}</button>`;}
+      const kc=kCls(c),dimC=N&&c<minN;
+      const tip=`${fmtD(dt)}${hol.length?" · "+hol.map(h=>h.t).join(", "):""}\nMůže ${c} z ${N}${c?": "+cnt[k].join(", "):""}${N&&c<N?"\nNemůže: "+rows.filter(r=>!r.days.has(k)).map(r=>r.name).join(", "):""}`;
+      const mark=N<=6?`<span class="dots" aria-hidden="true">${rows.map(r=>`<i class="${r.days.has(k)?"on":""}"></i>`).join("")}</span>`:c?`<small>${c}/${N}</small>`:"";
+      cells+=`<button type="button" class="cd${kc}${dimC?" dim":""}${dt.getDay()%6===0?" we":""}${mine?" mine":""}${hol.length?" hol":""}${S.date&&dt>=ta&&dt<=tb?" trip":""}" data-d="${k}" title="${escH(tip)}" aria-pressed="${mine}" aria-label="${fmtD(dt)}, může ${c} z ${N}"><span class="dn">${d}</span>${N?mark:""}</button>`;}
     const all=[...Array(dim)].every((_,i)=>A.mine.has(isoD(new Date(2027,mi,i+1,12))));
     return `<div class="calm"><h3>${MONTHS[mi]} 2027 <button type="button" data-calmonth="${mi}">${all?"zrušit celý měsíc":"můžu celý měsíc"}</button></h3><div class="calg">${cells}</div></div>`}).join("");
   $("#calWrap").innerHTML=`${head}${best}
     <p class="vstate">${me?`Vyplňuješ za <b>${escH(V.name)}</b> · označeno ${A.mine.size} dní`:"Nejdřív napiš nahoře jméno"}${A.timer||A.busy?" · ukládám…":A.msg?` · <span style="color:var(--${A.err?"bad":"good"})">${escH(A.msg)}</span>`:""}${me&&A.mine.size?` · <button class="btn sm" type="button" data-calclear="1">smazat moje dny</button>`:""}</p>
+    ${N>1?`<div class="calmin"><span>Zvýraznit dny, kdy může aspoň:</span><div class="seg" role="group" aria-label="Minimální počet lidí">${[...Array(N)].map((_,i)=>`<button type="button" data-calmin="${i+1}" aria-pressed="${i+1===minN}">${i+1===N?`všichni (${N})`:i+1}</button>`).join("")}</div><span class="muted">${top===N?"Jsou dny, kdy můžou všichni.":`Zatím nejvíc ${top} z ${N} najednou.`}</span></div>`:""}
+    <div class="callegend" style="margin:0 0 12px">${N?`<span><i style="background:var(--good)"></i>můžou všichni</span>${N>=3?`<span><i style="background:var(--warn)"></i>chybí jeden</span>`:""}<span><i style="background:color-mix(in srgb,var(--warn) 22%,var(--surface))"></i>může jen část</span><span><i></i>nikdo</span>${N<=6?`<span>tečky = lidé (${rows.map(r=>escH(r.name)).join(", ")}), plná = může</span>`:""}`:""}<span><i style="box-shadow:inset 0 0 0 2px var(--road)"></i>✓ můžeš ty</span><span><i style="outline:2px solid var(--accent);outline-offset:-1px"></i>vybraný termín</span><span><i style="border-color:var(--warn);border-style:dotted;border-width:2px"></i>svátek nebo prázdniny</span></div>
     <div class="calmonths">${months}</div>
-    <div class="callegend"><span><i style="background:color-mix(in srgb,var(--good) 90%,var(--surface))"></i>můžou skoro všichni</span><span><i style="background:color-mix(in srgb,var(--good) 30%,var(--surface))"></i>může málokdo</span><span><i style="box-shadow:inset 0 0 0 2px var(--road)"></i>můžeš ty</span><span><i style="outline:2px solid var(--accent);outline-offset:-1px"></i>vybraný termín</span><span><i style="border-color:var(--warn);border-style:dotted;border-width:2px"></i>svátek nebo prázdniny</span></div>
-    ${N?`<p class="hint" style="margin-top:10px">Vyplnili: ${rows.map(r=>`<b>${escH(r.name)}</b> (${r.days.size} dní)`).join(", ")}</p>`:""}`;}
+    ${N?calPeople(rows):""}`;}
+/* přehled po lidech: řádek = člověk, sloupec = den; zelená = může */
+function calPeople(rows){const N=rows.length;
+  return `<div class="calppl"><div class="eyebrow" style="margin-bottom:6px">Kdo kdy může</div>${[0,1,2,3,4].map(mi=>{const dim=new Date(2027,mi+1,0).getDate(),ds=[...Array(dim)].map((_,i)=>new Date(2027,mi,i+1,12));
+    return `<table aria-label="${MONTHS[mi]}: kdo kdy může"><colgroup><col style="width:72px">${ds.map(()=>"<col>").join("")}</colgroup>
+      <thead><tr><th style="text-align:left;font-size:11px;color:var(--ink)">${MONTHS[mi]}</th>${ds.map(d=>`<th>${d.getDate()%5===0||d.getDate()===1?d.getDate():""}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r=>`<tr><th title="${escH(r.name)}">${escH(r.name)}${r.me?" (ty)":""}</th>${ds.map(d=>{const k=isoD(d),on=r.days.has(k),all=rows.every(x=>x.days.has(k));
+        return `<td class="${on?"on":""}${on&&all&&N>1?" all":""}${d.getDay()%6===0?" we":""}" title="${escH(r.name)} · ${fmtD(d)}: ${on?"může":"nemůže"}"></td>`}).join("")}</tr>`).join("")}</tbody></table>`}).join('<div style="height:10px"></div>')}
+    <p class="hint" style="margin-top:6px">Zelená = může, orámované dny můžou všichni. Do oranžova laděné prázdné políčko = víkend.</p></div>`;}
 function aSet(k,on){if(on)A.mine.add(k);else A.mine.delete(k);}
 /* tažení myší označí (nebo zruší) všechny dny od prvního po aktuální políčko */
 function aPaintTo(k){const [a,b]=[A.from,k].sort(),cur=new Set(A.snap);
@@ -1391,6 +1421,7 @@ $("#calWrap").addEventListener("click",e=>{const c=e.target.closest("[data-d]");
   const mb=e.target.closest("[data-calmonth]");if(mb){if(!V.name.trim()){vNeedName();return}const mi=+mb.dataset.calmonth,dim=new Date(2027,mi+1,0).getDate(),ks=[...Array(dim)].map((_,i)=>isoD(new Date(2027,mi,i+1,12)));
     const all=ks.every(k=>A.mine.has(k));ks.forEach(k=>aSet(k,!all));aChanged();return}
   if(e.target.closest("[data-calclear]")){if(confirm("Smazat všechny tvoje označené dny?")){A.mine.clear();aChanged()}return}
+  const mn=e.target.closest("[data-calmin]");if(mn){A.min=+mn.dataset.calmin;renderCal();return}
   const p=e.target.closest("[data-calpick]");if(p){S.date=p.dataset.calpick;S.m=Dt(S.date).getMonth();render();}});
 aLoad();
 setInterval(()=>{if(!document.hidden&&!A.timer&&!A.busy&&A.paint==null)aLoad()},60000);
