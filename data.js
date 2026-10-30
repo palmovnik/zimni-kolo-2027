@@ -29,6 +29,7 @@ const SRC={
  cl_dxb:{t:"cestujlevne.com: Praha–Dubaj se Smartwings (akce 1/2026)",u:"https://www.cestujlevne.com/akcni-letenky/prime-lety-z-prahy-do-dubaje-behem-ledna-se-smartwings"},
  sk_fue:{t:"Skyscanner: Praha–Fuerteventura (Smartwings ~9 letů týdně, jaro 2026)",u:"https://www.skyscanner.co.za/routes/prg/fue/prague-to-fuerteventura.html"},
  sk_vfue:{t:"Skyscanner: Vídeň–Fuerteventura (Ryanair, Austrian)",u:"https://www.skyscanner.co.za/routes/vie/fue/vienna-to-fuerteventura.html"},
+ oegv27:{t:"oesterreich.gv.at: Ferienkalender 2026/2027 (Rakousko)",u:"https://www.oesterreich.gv.at/de/themen/bildung_und_ausbildung/schulen/Seite.1100114"},
  wko26:{t:"WKO: přehled prázdnin v Rakousku 2026/27 (PDF)",u:"https://www.wko.at/oe/transport-verkehr/autobus/ferien-uebersicht-26-27.pdf"},
  cebia27:{t:"Cebia: jarní prázdniny 2027 po okresech",u:"https://www.cebia.cz/pruvodce/jarni-prazdniny-2027"},
  topcz27:{t:"Top.cz: jarní prázdniny, přehled podle okresů",u:"https://www.top.cz/jarni-prazdniny-prehled-terminu-podle-okresu"},
@@ -188,9 +189,12 @@ const SRC={
  g_tus:{t:"Gambero Rosso: Val d'Orcia",u:"https://www.gamberorossointernational.com/?p=507221"}
 };
 
-/* Prázdniny a svátky, které skupinu zajímají (školní prázdniny jen okresy Zlín a Praha-východ / Říčany), a změna letového řádu (od, do včetně) */
+/* Prázdniny a svátky, které skupinu zajímají (školní prázdniny jen okresy Zlín a Praha-východ / Říčany), rakouské prázdniny
+   jako upozornění na možné dražší lety z Vídně (vliv na ceny není ověřený) a změna letového řádu (od, do včetně) */
 const HOL=[
+ {od:"2027-02-01",do:"2027-02-06",t:"Semestrální prázdniny Vídeň a Dolní Rakousy: lety z Vídně můžou být dražší (neověřeno)",src:["oegv27","wko26"]},
  {od:"2027-03-08",do:"2027-03-14",t:"Jarní prázdniny Zlín a Praha-východ (Říčany)",src:["cebia27","topcz27"]},
+ {od:"2027-03-20",do:"2027-03-29",t:"Velikonoční prázdniny v Rakousku: lety z Vídně můžou být dražší (neověřeno)",src:["oegv27","wko26"]},
  {od:"2027-03-25",do:"2027-03-29",t:"Velikonoční prázdniny a Velikonoce (čtvrtek až Velikonoční pondělí)",src:["fin27"]},
  {od:"2027-03-28",do:"2027-03-28",t:"Začíná letní letový řád (sezónní linky)"},
  {od:"2027-05-01",do:"2027-05-01",t:"Svátek práce"},
