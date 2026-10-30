@@ -199,6 +199,8 @@ const HOL=[
  {od:"2027-03-28",do:"2027-03-28",t:"Začíná letní letový řád (sezónní linky)"},
  {od:"2027-05-01",do:"2027-05-01",t:"Svátek práce"},
  {od:"2027-05-08",do:"2027-05-08",t:"Den vítězství"}];
+// Velikonoce 2027 (Velký pátek až Velikonoční pondělí), zvýrazněné v kalendáři
+const EASTER={od:"2027-03-26",do:"2027-03-29",src:["fin27"]};
 
 /* Cílová letiště pro vyhledávání letenek (IATA); f.<odlet>.to přepíše cíl pro konkrétní odlet */
 const APT={mallorca:"PMI",tenerife:"TFS",grancanaria:"LPA",lanzarote:"ACE",fuerteventura:"FUE",lapalma:"SPC",costablanca:"ALC",

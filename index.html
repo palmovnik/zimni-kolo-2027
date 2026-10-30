@@ -12,18 +12,18 @@
 /* Layout: sticky control strip (měsíc, letiště, filtry) nad čtyřmi pohledy — karty, počasí (heatmapa + graf), srovnání, tabulka. */
 :root{
   --bg:#f3f5f2; --surface:#ffffff; --surface-2:#e8ece6; --ink:#17201c; --muted:#5b6862; --line:#d3d9d2;
-  --accent:#d4561e; --accent-ink:#ffffff; --road:#2f4b44; --good:#2f7d4f; --warn:#b07a12; --bad:#b23b2c;
+  --accent:#d4561e; --accent-ink:#ffffff; --road:#2f4b44; --good:#2f7d4f; --warn:#b07a12; --bad:#b23b2c; --easter:#9b3fd1;
   --chip:#e1e7df; --sea:#d7e6ea; --land:#f7f8f4; --coast:#b9c6c0; --shadow:0 1px 2px rgba(20,30,25,.06),0 6px 20px rgba(20,30,25,.06);
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121816; --surface:#1a2320; --surface-2:#232e2a; --ink:#e7ece8; --muted:#9aa9a2; --line:#2e3b36;
-  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68;
+  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68; --easter:#d39cff;
   --chip:#26322e; --sea:#14232a; --land:#202b28; --coast:#3a4a44; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121816; --surface:#1a2320; --surface-2:#232e2a; --ink:#e7ece8; --muted:#9aa9a2; --line:#2e3b36;
-  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68;
+  --accent:#f0773f; --accent-ink:#1a0d06; --road:#9cc7b9; --good:#5cc286; --warn:#e2b04a; --bad:#ef7a68; --easter:#d39cff;
   --chip:#26322e; --sea:#14232a; --land:#202b28; --coast:#3a4a44; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -391,6 +391,10 @@ svg.lc .grid line{stroke:var(--line)}
 .cd.mine{box-shadow:inset 0 0 0 2px var(--road)}
 .cd.mine::after{content:"✓";position:absolute;top:1px;right:3px;font-size:9px;color:currentColor}
 .cd.hol{text-decoration:underline dotted var(--warn) 2px;text-underline-offset:3px}
+.cd.ez{border:2px solid var(--easter);box-shadow:0 0 0 1px var(--easter)}
+.cd.mine.ez{box-shadow:inset 0 0 0 2px var(--road),0 0 0 1px var(--easter)}
+.ezchip{font:600 12.5px/1.3 var(--f-body);color:var(--easter);margin:8px 0 0}
+.cd.ez::before{content:"";position:absolute;top:3px;left:4px;width:8px;height:10px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:var(--easter)}
 .cd.trip{outline:2px solid var(--accent);outline-offset:-1px}
 .callegend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin:12px 0 0}
 .callegend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
@@ -588,10 +592,11 @@ footer p{max-width:90ch}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <!-- ?v= měň při každé změně data.js, jinak prohlížeč může 10 minut držet starou verzi k novému index.html -->
-<script src="data.js?v=2026-10-30a"></script>
+<script src="data.js?v=2026-10-30b"></script>
 <script>
 /* starý data.js z cache nesmí shodit stránku */
 if(typeof WIND==="undefined")window.WIND={};
+if(typeof EASTER==="undefined")window.EASTER={od:"",do:""};
 const MONTHS=["Leden","Únor","Březen","Duben","Květen"], MS=["Led","Úno","Bře","Dub","Kvě"], EUR=24.5;
 
 /* 2. kolo průzkumu doplňuje 1. kolo */
@@ -1386,17 +1391,17 @@ function renderCal(){const rows=aRows(),N=rows.length,me=!!V.name.trim(),[ta,tb]
     :`<p class="vnote">Zatím nikdo nevyplnil. Začni ty: ${me?"klikni na dny, kdy můžeš.":"napiš nahoře jméno a klikni na dny, kdy můžeš."}</p>`;
   const months=[0,1,2,3,4].map(mi=>{const first=new Date(2027,mi,1,12),dim=new Date(2027,mi+1,0).getDate(),off=(first.getDay()+6)%7;
     let cells=["po","út","st","čt","pá","so","ne"].map(d=>`<span class="dow">${d}</span>`).join("")+"<span></span>".repeat(off);
-    for(let d=1;d<=dim;d++){const dt=new Date(2027,mi,d,12),k=isoD(dt),c=(cnt[k]||[]).length,hol=HOL.filter(h=>h.od<=k&&h.do>=k&&!h.wide),mine=A.mine.has(k);
+    for(let d=1;d<=dim;d++){const dt=new Date(2027,mi,d,12),k=isoD(dt),c=(cnt[k]||[]).length,hol=HOL.filter(h=>h.od<=k&&h.do>=k&&!h.wide),mine=A.mine.has(k),ez=k>=EASTER.od&&k<=EASTER.do;
       const kc=kCls(c),dimC=N&&c<minN;
-      const tip=`${fmtD(dt)}${hol.length?" · "+hol.map(h=>h.t).join(", "):""}\nMůže ${c} z ${N}${c?": "+cnt[k].join(", "):""}${N&&c<N?"\nNemůže: "+rows.filter(r=>!r.days.has(k)).map(r=>r.name).join(", "):""}`;
+      const tip=`${fmtD(dt)}${ez?" · Velikonoce":""}${hol.length?" · "+hol.map(h=>h.t).join(", "):""}\nMůže ${c} z ${N}${c?": "+cnt[k].join(", "):""}${N&&c<N?"\nNemůže: "+rows.filter(r=>!r.days.has(k)).map(r=>r.name).join(", "):""}`;
       const mark=N<=6?`<span class="dots" aria-hidden="true">${rows.map(r=>`<i class="${r.days.has(k)?"on":""}"></i>`).join("")}</span>`:c?`<small>${c}/${N}</small>`:"";
-      cells+=`<button type="button" class="cd${kc}${dimC?" dim":""}${dt.getDay()%6===0?" we":""}${mine?" mine":""}${hol.length?" hol":""}${S.date&&dt>=ta&&dt<=tb?" trip":""}" data-d="${k}" title="${escH(tip)}" aria-pressed="${mine}" aria-label="${fmtD(dt)}, může ${c} z ${N}"><span class="dn">${d}</span>${N?mark:""}</button>`;}
+      cells+=`<button type="button" class="cd${kc}${dimC?" dim":""}${dt.getDay()%6===0?" we":""}${mine?" mine":""}${hol.length?" hol":""}${ez?" ez":""}${S.date&&dt>=ta&&dt<=tb?" trip":""}" data-d="${k}" title="${escH(tip)}" aria-pressed="${mine}" aria-label="${fmtD(dt)}, může ${c} z ${N}"><span class="dn">${d}</span>${N?mark:""}</button>`;}
     const all=[...Array(dim)].every((_,i)=>A.mine.has(isoD(new Date(2027,mi,i+1,12))));
-    return `<div class="calm"><h3>${MONTHS[mi]} 2027 <button type="button" data-calmonth="${mi}">${all?"zrušit celý měsíc":"můžu celý měsíc"}</button></h3><div class="calg">${cells}</div></div>`}).join("");
+    return `<div class="calm"><h3>${MONTHS[mi]} 2027 <button type="button" data-calmonth="${mi}">${all?"zrušit celý měsíc":"můžu celý měsíc"}</button></h3><div class="calg">${cells}</div>${EASTER.od&&+EASTER.od.slice(5,7)===mi+1?`<p class="ezchip">Velikonoce ${+EASTER.od.slice(8)}.–${+EASTER.do.slice(8)}. ${mi+1}. (Velký pátek až Velikonoční pondělí)</p>`:""}</div>`}).join("");
   $("#calWrap").innerHTML=`${head}${best}
     <p class="vstate">${me?`Vyplňuješ za <b>${escH(V.name)}</b> · označeno ${A.mine.size} dní`:"Nejdřív napiš nahoře jméno"}${A.timer||A.busy?" · ukládám…":A.msg?` · <span style="color:var(--${A.err?"bad":"good"})">${escH(A.msg)}</span>`:""}${me&&A.mine.size?` · <button class="btn sm" type="button" data-calclear="1">smazat moje dny</button>`:""}</p>
     ${N>1?`<div class="calmin"><span>Zvýraznit dny, kdy může aspoň:</span><div class="seg" role="group" aria-label="Minimální počet lidí">${[...Array(N)].map((_,i)=>`<button type="button" data-calmin="${i+1}" aria-pressed="${i+1===minN}">${i+1===N?`všichni (${N})`:i+1}</button>`).join("")}</div><span class="muted">${top===N?"Jsou dny, kdy můžou všichni.":`Zatím nejvíc ${top} z ${N} najednou.`}</span></div>`:""}
-    <div class="callegend" style="margin:0 0 12px">${N?`<span><i style="background:var(--good)"></i>můžou všichni</span>${N>=3?`<span><i style="background:var(--warn)"></i>chybí jeden</span>`:""}<span><i style="background:color-mix(in srgb,var(--warn) 22%,var(--surface))"></i>může jen část</span><span><i></i>nikdo</span>${N<=6?`<span>tečky = lidé (${rows.map(r=>escH(r.name)).join(", ")}), plná = může</span>`:""}`:""}<span><i style="box-shadow:inset 0 0 0 2px var(--road)"></i>✓ můžeš ty</span><span><i style="outline:2px solid var(--accent);outline-offset:-1px"></i>vybraný termín</span><span><i style="border-color:var(--warn);border-style:dotted;border-width:2px"></i>svátek nebo prázdniny</span></div>
+    <div class="callegend" style="margin:0 0 12px">${N?`<span><i style="background:var(--good)"></i>můžou všichni</span>${N>=3?`<span><i style="background:var(--warn)"></i>chybí jeden</span>`:""}<span><i style="background:color-mix(in srgb,var(--warn) 22%,var(--surface))"></i>může jen část</span><span><i></i>nikdo</span>${N<=6?`<span>tečky = lidé (${rows.map(r=>escH(r.name)).join(", ")}), plná = může</span>`:""}`:""}<span><i style="box-shadow:inset 0 0 0 2px var(--road)"></i>✓ můžeš ty</span><span><i style="outline:2px solid var(--accent);outline-offset:-1px"></i>vybraný termín</span><span><i style="border-color:var(--warn);border-style:dotted;border-width:2px"></i>svátek nebo prázdniny</span><span><i style="border:2px solid var(--easter)"></i>Velikonoce</span></div>
     <div class="calmonths">${months}</div>
     ${N?calPeople(rows):""}`;}
 /* přehled po lidech: řádek = člověk, sloupec = den; zelená = může */
